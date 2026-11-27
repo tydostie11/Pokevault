@@ -632,11 +632,18 @@
               <span>Copy Ticket</span>
             </button>
             <button
+              type="button"
+              onclick="openPayoutMethodPopup()"
+              class="py-2.5 px-3.5 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/40 text-purple-200 font-bold text-xs transition cursor-pointer"
+            >
+              Payout Popup
+            </button>
+            <button
               type="submit"
               id="submitPayoutTicketBtn"
               class="flex-1 py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-extrabold text-xs shadow-lg shadow-emerald-500/20 transition cursor-pointer"
             >
-              Lock In Offer &amp; Generate Payout Ticket
+              Commit Offer &amp; Choose Payout
             </button>
           </div>
         </form>
@@ -659,1304 +666,290 @@
     </div>
   </div>
 
-  <script>
-    // =========================================================================
-    // 1. MULTI-SOURCE POKEMON CARD DATABASE (2026 Market Benchmarks)
-    // =========================================================================
-    const INITIAL_CARDS = [
-      {
-        id: "gengar-vmax-alt",
-        name: "Gengar VMAX (Alternate Art)",
-        pokemon: "Gengar",
-        family: "gengar-line",
-        set: "Sword & Shield: Fusion Strike",
-        number: "271/264",
-        era: "Gengar Line",
-        secondaryEra: "Sword & Shield",
-        rarity: "Alternate Art VMAX",
-        type: "Psychic",
-        artStyle: "gengar",
-        tcgPrice: 985.00,
-        ebayPrice: 1005.00,
-        collectrPrice: 990.00
-      },
-      {
-        id: "gengar-mimikyu-gx-alt",
-        name: "Gengar & Mimikyu GX (Alt Art)",
-        pokemon: "Gengar",
-        family: "gengar-line",
-        set: "Sun & Moon: Team Up",
-        number: "165/181",
-        era: "Gengar Line",
-        secondaryEra: "Sun & Moon / Promo",
-        rarity: "Alternate Full Art",
-        type: "Psychic",
-        artStyle: "gengar",
-        tcgPrice: 2420.00,
-        ebayPrice: 2475.00,
-        collectrPrice: 2440.00
-      },
-      {
-        id: "mega-gengar-ex-sir",
-        name: "Mega Gengar ex (Special Illustration Rare)",
-        pokemon: "Gengar",
-        family: "gengar-line",
-        set: "Mega Evolution: Phantasmal Flames",
-        number: "284/217",
-        era: "Gengar Line",
-        secondaryEra: "Sword & Shield",
-        rarity: "Special Illustration Rare",
-        type: "Psychic",
-        artStyle: "gengar",
-        tcgPrice: 535.00,
-        ebayPrice: 552.00,
-        collectrPrice: 540.00
-      },
-      {
-        id: "sabrinas-gengar-14",
-        name: "Sabrina's Gengar (Holo)",
-        pokemon: "Gengar",
-        family: "gengar-line",
-        set: "Gym Heroes (2000)",
-        number: "14/132",
-        era: "Gengar Line",
-        secondaryEra: "WOTC Vintage",
-        rarity: "Holo Rare",
-        type: "Psychic",
-        artStyle: "gengar",
-        tcgPrice: 290.00,
-        ebayPrice: 305.00,
-        collectrPrice: 295.00
-      },
-      {
-        id: "fossil-gengar-5",
-        name: "Gengar (Fossil Holo)",
-        pokemon: "Gengar",
-        family: "gengar-line",
-        set: "Fossil (1999)",
-        number: "5/62",
-        era: "Gengar Line",
-        secondaryEra: "WOTC Vintage",
-        rarity: "Holo Rare",
-        type: "Psychic",
-        artStyle: "gengar",
-        tcgPrice: 98.00,
-        ebayPrice: 104.00,
-        collectrPrice: 100.00
-      },
-      {
-        id: "dark-gengar-neo",
-        name: "Dark Gengar (Holo)",
-        pokemon: "Gengar",
-        family: "gengar-line",
-        set: "Neo Destiny (2002)",
-        number: "6/105",
-        era: "Gengar Line",
-        secondaryEra: "WOTC Vintage",
-        rarity: "Holo Rare",
-        type: "Psychic",
-        artStyle: "gengar",
-        tcgPrice: 245.00,
-        ebayPrice: 260.00,
-        collectrPrice: 252.00
-      },
-      {
-        id: "gengar-ex-154",
-        name: "Gengar ex (Ultra Rare Full Art)",
-        pokemon: "Gengar",
-        family: "gengar-line",
-        set: "Scarlet & Violet: Temporal Forces",
-        number: "193/162",
-        era: "Gengar Line",
-        secondaryEra: "Sword & Shield",
-        rarity: "Ultra Rare",
-        type: "Darkness",
-        artStyle: "gengar",
-        tcgPrice: 44.00,
-        ebayPrice: 47.50,
-        collectrPrice: 45.50
-      },
-      {
-        id: "haunter-fossil-holo",
-        name: "Haunter (Fossil Holo)",
-        pokemon: "Haunter",
-        family: "gengar-line",
-        set: "Fossil (1999)",
-        number: "6/62",
-        era: "Gengar Line",
-        secondaryEra: "WOTC Vintage",
-        rarity: "Holo Rare",
-        type: "Psychic",
-        artStyle: "haunter",
-        tcgPrice: 25.50,
-        ebayPrice: 28.00,
-        collectrPrice: 26.50
-      },
-      {
-        id: "sabrinas-haunter-55",
-        name: "Sabrina's Haunter (Uncommon)",
-        pokemon: "Haunter",
-        family: "gengar-line",
-        set: "Gym Heroes (2000)",
-        number: "55/132",
-        era: "Gengar Line",
-        secondaryEra: "WOTC Vintage",
-        rarity: "Uncommon",
-        type: "Psychic",
-        artStyle: "haunter",
-        tcgPrice: 12.50,
-        ebayPrice: 14.00,
-        collectrPrice: 13.00
-      },
-      {
-        id: "gastly-temporal-ir",
-        name: "Gastly (Illustration Rare)",
-        pokemon: "Gastly",
-        family: "gengar-line",
-        set: "Scarlet & Violet: Temporal Forces",
-        number: "177/162",
-        era: "Gengar Line",
-        secondaryEra: "Sword & Shield",
-        rarity: "Illustration Rare",
-        type: "Darkness",
-        artStyle: "gastly",
-        tcgPrice: 37.50,
-        ebayPrice: 40.00,
-        collectrPrice: 38.50
-      },
-      {
-        id: "umbreon-vmax-alt",
-        name: "Umbreon VMAX (Alt Art / Moonbreon)",
-        pokemon: "Umbreon",
-        family: "eevee-line",
-        set: "Sword & Shield: Evolving Skies",
-        number: "215/203",
-        era: "Sword & Shield",
-        rarity: "Alternate Art VMAX",
-        type: "Darkness",
-        artStyle: "moon",
-        tcgPrice: 2220.00,
-        ebayPrice: 2265.00,
-        collectrPrice: 2240.00
-      },
-      {
-        id: "umbreon-ex-prismatic-sir",
-        name: "Umbreon ex (Special Illustration Rare)",
-        pokemon: "Umbreon",
-        family: "eevee-line",
-        set: "Scarlet & Violet: Prismatic Evolutions",
-        number: "161/131",
-        era: "Sword & Shield",
-        rarity: "Special Illustration Rare",
-        type: "Darkness",
-        artStyle: "moon",
-        tcgPrice: 1380.00,
-        ebayPrice: 1425.00,
-        collectrPrice: 1400.00
-      },
-      {
-        id: "espeon-vmax-alt",
-        name: "Espeon VMAX (Alternate Art)",
-        pokemon: "Espeon",
-        family: "eevee-line",
-        set: "Sword & Shield: Fusion Strike",
-        number: "270/264",
-        era: "Sword & Shield",
-        rarity: "Alternate Art VMAX",
-        type: "Psychic",
-        artStyle: "psychic",
-        tcgPrice: 295.00,
-        ebayPrice: 308.00,
-        collectrPrice: 300.00
-      },
-      {
-        id: "sylveon-vmax-alt",
-        name: "Sylveon VMAX (Alternate Art)",
-        pokemon: "Sylveon",
-        family: "eevee-line",
-        set: "Sword & Shield: Evolving Skies",
-        number: "212/203",
-        era: "Sword & Shield",
-        rarity: "Alternate Art VMAX",
-        type: "Psychic",
-        artStyle: "psychic",
-        tcgPrice: 340.00,
-        ebayPrice: 355.00,
-        collectrPrice: 346.00
-      },
-      {
-        id: "eevee-twilight-ir",
-        name: "Eevee (Illustration Rare)",
-        pokemon: "Eevee",
-        family: "eevee-line",
-        set: "Scarlet & Violet: Twilight Masquerade",
-        number: "188/167",
-        era: "Sword & Shield",
-        rarity: "Illustration Rare",
-        type: "Colorless",
-        artStyle: "crest",
-        tcgPrice: 78.00,
-        ebayPrice: 82.50,
-        collectrPrice: 80.00
-      },
-      {
-        id: "base-charizard-4",
-        name: "Charizard (Base Set Unlimited Holo)",
-        pokemon: "Charizard",
-        family: "charizard-line",
-        set: "Base Set (1999)",
-        number: "4/102",
-        era: "WOTC Vintage",
-        rarity: "Holo Rare",
-        type: "Fire",
-        artStyle: "flame",
-        tcgPrice: 415.00,
-        ebayPrice: 430.00,
-        collectrPrice: 420.00
-      },
-      {
-        id: "mega-charizard-x-ex-125",
-        name: "Mega Charizard X ex (Special Illustration Rare)",
-        pokemon: "Charizard",
-        family: "charizard-line",
-        set: "Mega Evolution: Inferno X",
-        number: "125/094",
-        era: "Sword & Shield",
-        rarity: "Special Illustration Rare",
-        type: "Fire",
-        artStyle: "flame",
-        tcgPrice: 680.00,
-        ebayPrice: 705.00,
-        collectrPrice: 690.00
-      },
-      {
-        id: "charizard-ex-151-sir",
-        name: "Charizard ex (151 Special Illustration Rare)",
-        pokemon: "Charizard",
-        family: "charizard-line",
-        set: "Scarlet & Violet: 151",
-        number: "199/165",
-        era: "Sword & Shield",
-        rarity: "Special Illustration Rare",
-        type: "Fire",
-        artStyle: "flame",
-        tcgPrice: 235.00,
-        ebayPrice: 245.00,
-        collectrPrice: 240.00
-      },
-      {
-        id: "charmander-obsidian-ir",
-        name: "Charmander (Illustration Rare Promo)",
-        pokemon: "Charmander",
-        family: "charizard-line",
-        set: "SVP Black Star Promos",
-        number: "044",
-        era: "Sun & Moon / Promo",
-        rarity: "Black Star Promo",
-        type: "Fire",
-        artStyle: "flame",
-        tcgPrice: 46.00,
-        ebayPrice: 49.00,
-        collectrPrice: 47.50
-      },
-      {
-        id: "pikachu-ex-surging-sir",
-        name: "Pikachu ex (Special Illustration Rare)",
-        pokemon: "Pikachu",
-        family: "pikachu-line",
-        set: "Scarlet & Violet: Surging Sparks",
-        number: "238/191",
-        era: "Sword & Shield",
-        rarity: "Special Illustration Rare",
-        type: "Lightning",
-        artStyle: "bolt",
-        tcgPrice: 510.00,
-        ebayPrice: 530.00,
-        collectrPrice: 520.00
-      },
-      {
-        id: "pikachu-grey-felt-hat",
-        name: "Pikachu with Grey Felt Hat",
-        pokemon: "Pikachu",
-        family: "pikachu-line",
-        set: "SVP Black Star Promos (Van Gogh)",
-        number: "085",
-        era: "Sun & Moon / Promo",
-        rarity: "Black Star Promo",
-        type: "Lightning",
-        artStyle: "bolt",
-        tcgPrice: 295.00,
-        ebayPrice: 310.00,
-        collectrPrice: 302.00
-      },
-      {
-        id: "raichu-paldea-ir",
-        name: "Raichu (Illustration Rare)",
-        pokemon: "Raichu",
-        family: "pikachu-line",
-        set: "Scarlet & Violet: Paldea Evolved",
-        number: "211/193",
-        era: "Sword & Shield",
-        rarity: "Illustration Rare",
-        type: "Lightning",
-        artStyle: "bolt",
-        tcgPrice: 52.00,
-        ebayPrice: 55.00,
-        collectrPrice: 53.50
-      },
-      {
-        id: "rayquaza-vmax-alt",
-        name: "Rayquaza VMAX (Alternate Art)",
-        pokemon: "Rayquaza",
-        family: "rayquaza-line",
-        set: "Sword & Shield: Evolving Skies",
-        number: "218/203",
-        era: "Sword & Shield",
-        rarity: "Alternate Art VMAX",
-        type: "Dragon",
-        artStyle: "dragon",
-        tcgPrice: 675.00,
-        ebayPrice: 695.00,
-        collectrPrice: 685.00
-      },
-      {
-        id: "lugia-v-alt",
-        name: "Lugia V (Alternate Full Art)",
-        pokemon: "Lugia",
-        family: "lugia-line",
-        set: "Sword & Shield: Silver Tempest",
-        number: "186/195",
-        era: "Sword & Shield",
-        rarity: "Alternate Full Art",
-        type: "Colorless",
-        artStyle: "storm",
-        tcgPrice: 255.00,
-        ebayPrice: 268.00,
-        collectrPrice: 260.00
-      },
-      {
-        id: "giratina-v-alt",
-        name: "Giratina V (Alternate Full Art)",
-        pokemon: "Giratina",
-        family: "giratina-line",
-        set: "Sword & Shield: Lost Origin",
-        number: "186/196",
-        era: "Sword & Shield",
-        rarity: "Alternate Full Art",
-        type: "Dragon",
-        artStyle: "void",
-        tcgPrice: 560.00,
-        ebayPrice: 580.00,
-        collectrPrice: 570.00
-      },
-      {
-        id: "latias-latios-gx-alt",
-        name: "Latias & Latios GX (Lovebirds Alt Art)",
-        pokemon: "Latias",
-        family: "eon-duo",
-        set: "Sun & Moon: Team Up",
-        number: "170/181",
-        era: "Sun & Moon / Promo",
-        rarity: "Alternate Full Art",
-        type: "Dragon",
-        artStyle: "dragon",
-        tcgPrice: 1580.00,
-        ebayPrice: 1640.00,
-        collectrPrice: 1610.00
-      },
-      {
-        id: "mewtwo-gx-secret",
-        name: "Mewtwo GX (Mewtube Secret Rare)",
-        pokemon: "Mewtwo",
-        family: "mew-line",
-        set: "Sun & Moon: Shining Legends",
-        number: "78/73",
-        era: "Sun & Moon / Promo",
-        rarity: "Secret Rare",
-        type: "Psychic",
-        artStyle: "psychic",
-        tcgPrice: 275.00,
-        ebayPrice: 290.00,
-        collectrPrice: 282.00
-      },
-      {
-        id: "mew-ex-151-sir",
-        name: "Mew ex (Bubble Mew Special Illustration Rare)",
-        pokemon: "Mew",
-        family: "mew-line",
-        set: "Scarlet & Violet: Paldean Fates",
-        number: "232/091",
-        era: "Sword & Shield",
-        rarity: "Special Illustration Rare",
-        type: "Psychic",
-        artStyle: "psychic",
-        tcgPrice: 365.00,
-        ebayPrice: 380.00,
-        collectrPrice: 372.00
-      },
-      {
-        id: "dragonite-v-alt",
-        name: "Dragonite V (Alternate Full Art)",
-        pokemon: "Dragonite",
-        family: "dragonite-line",
-        set: "Sword & Shield: Evolving Skies",
-        number: "192/203",
-        era: "Sword & Shield",
-        rarity: "Alternate Full Art",
-        type: "Dragon",
-        artStyle: "dragon",
-        tcgPrice: 215.00,
-        ebayPrice: 225.00,
-        collectrPrice: 220.00
-      },
-      {
-        id: "base-blastoise-2",
-        name: "Blastoise (Base Set Unlimited Holo)",
-        pokemon: "Blastoise",
-        family: "blastoise-line",
-        set: "Base Set (1999)",
-        number: "2/102",
-        era: "WOTC Vintage",
-        rarity: "Holo Rare",
-        type: "Water",
-        artStyle: "wave",
-        tcgPrice: 148.00,
-        ebayPrice: 156.00,
-        collectrPrice: 152.00
-      },
-      {
-        id: "base-venusaur-15",
-        name: "Venusaur (Base Set Unlimited Holo)",
-        pokemon: "Venusaur",
-        family: "venusaur-line",
-        set: "Base Set (1999)",
-        number: "15/102",
-        era: "WOTC Vintage",
-        rarity: "Holo Rare",
-        type: "Grass",
-        artStyle: "leaf",
-        tcgPrice: 118.00,
-        ebayPrice: 125.00,
-        collectrPrice: 121.00
-      }
-    ];
-
-    // Evolution & Related Pokémon Family Mapping for Smart Suggestions
-    const EVOLUTION_FAMILIES = {
-      "gengar-line": ["gengar", "haunter", "gastly", "sabrina", "mimikyu", "ghost"],
-      "eevee-line": ["eevee", "umbreon", "espeon", "sylveon", "vaporeon", "jolteon", "flareon", "leafeon", "glaceon", "moonbreon"],
-      "charizard-line": ["charizard", "charmeleon", "charmander"],
-      "pikachu-line": ["pikachu", "raichu", "pichu", "van gogh"],
-      "mew-line": ["mew", "mewtwo", "mewtube", "bubble mew"],
-      "dragonite-line": ["dragonite", "dragonair", "dratini"],
-      "blastoise-line": ["blastoise", "wartortle", "squirtle"],
-      "venusaur-line": ["venusaur", "ivysaur", "bulbasaur"],
-      "rayquaza-line": ["rayquaza"],
-      "lugia-line": ["lugia"],
-      "giratina-line": ["giratina"],
-      "eon-duo": ["latias", "latios", "lovebirds"]
-    };
-
-    // Condition & Grading Multipliers
-    const CONDITION_MULTIPLIERS = {
-      NM: { label: "Near Mint", factor: 1.00 },
-      LP: { label: "Lightly Played", factor: 0.85 },
-      MP: { label: "Moderately Played", factor: 0.70 },
-      HP: { label: "Heavily Played", factor: 0.50 },
-      DMG: { label: "Damaged", factor: 0.35 }
-    };
-
-    const GRADE_MULTIPLIERS = {
-      RAW: { label: "Raw", factor: 1.00, badge: "RAW" },
-      PSA9: { label: "PSA 9 Mint", factor: 1.35, badge: "PSA 9" },
-      BGS95: { label: "BGS 9.5 Gem", factor: 1.75, badge: "BGS 9.5" },
-      CGC10: { label: "CGC 10 Pristine", factor: 2.15, badge: "CGC 10" },
-      PSA10: { label: "PSA 10 Gem Mint", factor: 2.45, badge: "PSA 10" }
-    };
-
-    const RECENT_SALES_FEED = [
-      {
-        id: "sale-1",
-        cardId: "gengar-vmax-alt",
-        name: "Gengar VMAX (Alternate Art)",
-        set: "Fusion Strike #271/264",
-        source: "eBay Last Sold",
-        sourceColor: "text-amber-400 bg-amber-500/10 border-amber-500/30",
-        conditionOrGrade: "NM Raw",
-        soldPrice: 1005.00,
-        timeAgo: "4m ago"
-      },
-      {
-        id: "sale-2",
-        cardId: "umbreon-vmax-alt",
-        name: "Umbreon VMAX (Alt Art / Moonbreon)",
-        set: "Evolving Skies #215/203",
-        source: "TCGPlayer Market",
-        sourceColor: "text-blue-400 bg-blue-500/10 border-blue-500/30",
-        conditionOrGrade: "NM Raw",
-        soldPrice: 2220.00,
-        timeAgo: "11m ago"
-      },
-      {
-        id: "sale-3",
-        cardId: "gengar-mimikyu-gx-alt",
-        name: "Gengar & Mimikyu GX (Alt Art)",
-        set: "Team Up #165/181",
-        source: "Collectr Comp",
-        sourceColor: "text-purple-400 bg-purple-500/10 border-purple-500/30",
-        conditionOrGrade: "NM Raw",
-        soldPrice: 2440.00,
-        timeAgo: "19m ago"
-      },
-      {
-        id: "sale-4",
-        cardId: "pikachu-grey-felt-hat",
-        name: "Pikachu with Grey Felt Hat",
-        set: "SVP Promo #085",
-        source: "eBay Last Sold",
-        sourceColor: "text-amber-400 bg-amber-500/10 border-amber-500/30",
-        conditionOrGrade: "NM Raw",
-        soldPrice: 310.00,
-        timeAgo: "27m ago"
-      },
-      {
-        id: "sale-5",
-        cardId: "haunter-fossil-holo",
-        name: "Haunter (Fossil Holo)",
-        set: "Fossil #6/62",
-        source: "TCGPlayer Market",
-        sourceColor: "text-blue-400 bg-blue-500/10 border-blue-500/30",
-        conditionOrGrade: "LP Raw",
-        soldPrice: 25.50,
-        timeAgo: "34m ago"
-      },
-      {
-        id: "sale-6",
-        cardId: "gastly-temporal-ir",
-        name: "Gastly (Illustration Rare)",
-        set: "Temporal Forces #177/162",
-        source: "Collectr Comp",
-        sourceColor: "text-purple-400 bg-purple-500/10 border-purple-500/30",
-        conditionOrGrade: "NM Raw",
-        soldPrice: 38.50,
-        timeAgo: "42m ago"
-      }
-    ];
-
-    // =========================================================================
-    // 2. APPLICATION STATE & PER-CARD $1,000+ TIERED PAYOUT RULES
-    // =========================================================================
-    const BASE_PAYOUT_RATE = 75;
-    const VIP_PAYOUT_RATE = 85;
-    const VIP_CARD_THRESHOLD = 1000.00; // Single card Blended Market Value >= $1,000 unlocks 85% for that card only
-
-    let cards = [...INITIAL_CARDS];
-    let cardOverrides = {}; // Per-card condition/grade overrides: { [cardId]: { condition, grade } }
-    let sellLot = []; // Array of { lotItemId, cardId, name, set, number, condition, grade, tcg, ebay, collectr, blendedMarket, qty }
-    let activeEra = "ALL";
-    let searchQuery = "";
-    let globalCondition = "NM";
-    let globalGrade = "RAW";
-    let sortBy = "value-desc";
-    let popupFocusedIndex = -1;
-    let currentPopupItems = [];
-    let recentSaleIndex = 0;
-    let isRecentSalesRotating = true;
-    let recentSalesTimer = null;
-
-    // Returns 85% if the individual card's unit market value is >= $1,000, otherwise 75%
-    function getCardPayoutRate(unitMarketValue) {
-      return unitMarketValue >= VIP_CARD_THRESHOLD ? VIP_PAYOUT_RATE : BASE_PAYOUT_RATE;
-    }
-
-    function getSellLotTotals() {
-      let totalTcg = 0;
-      let totalEbay = 0;
-      let totalCollectr = 0;
-      let totalMarket = 0;
-      let totalCashPayout = 0;
-      let vipCardUnits = 0;
-
-      sellLot.forEach(item => {
-        const rate = getCardPayoutRate(item.blendedMarket);
-        const lineMarket = item.blendedMarket * item.qty;
-        const linePayout = lineMarket * (rate / 100);
-
-        totalTcg += item.tcg * item.qty;
-        totalEbay += item.ebay * item.qty;
-        totalCollectr += item.collectr * item.qty;
-        totalMarket += lineMarket;
-        totalCashPayout += linePayout;
-        if (rate === VIP_PAYOUT_RATE) {
-          vipCardUnits += item.qty;
-        }
-      });
-
-      const effectiveBlendedPct = totalMarket > 0
-        ? Math.round((totalCashPayout / totalMarket) * 1000) / 10
-        : BASE_PAYOUT_RATE;
-
-      return {
-        totalTcg,
-        totalEbay,
-        totalCollectr,
-        totalMarket,
-        totalCashPayout,
-        vipCardUnits,
-        effectiveBlendedPct
-      };
-    }
-
-    // =========================================================================
-    // 3. VALUATION ENGINE & FUZZY MATCHING HELPERS
-    // =========================================================================
-    function getCardEffectiveSettings(cardId) {
-      const override = cardOverrides[cardId] || {};
-      return {
-        condition: override.condition || globalCondition,
-        grade: override.grade || globalGrade
-      };
-    }
-
-    function calculateCardValuation(card) {
-      const { condition, grade } = getCardEffectiveSettings(card.id);
-      // If graded slab is selected, condition multiplier is anchored to Mint baseline (1.0)
-      const condMult = grade === "RAW" ? CONDITION_MULTIPLIERS[condition].factor : 1.0;
-      const gradeMult = GRADE_MULTIPLIERS[grade].factor;
-      const combinedMult = condMult * gradeMult;
-
-      const tcg = card.tcgPrice * combinedMult;
-      const ebay = card.ebayPrice * combinedMult;
-      const collectr = card.collectrPrice * combinedMult;
-      const blendedMarket = (tcg + ebay + collectr) / 3;
-      const cardRate = getCardPayoutRate(blendedMarket);
-      const instantOffer = blendedMarket * (cardRate / 100);
-
-      return {
-        condition,
-        grade,
-        tcg,
-        ebay,
-        collectr,
-        blendedMarket,
-        cardRate,
-        isVipCard: cardRate === VIP_PAYOUT_RATE,
-        instantOffer
-      };
-    }
-    function buildPopupRowHTML(card, index, isRelated) {
-      const val = calculateCardValuation(card);
-      const badgeLabel = val.grade === "RAW" ? val.condition : GRADE_MULTIPLIERS[val.grade].badge;
-      const rateColorClass = val.isVipCard ? "text-amber-300" : "text-emerald-400";
-      const btnClass = val.isVipCard
-        ? "bg-amber-400 hover:bg-amber-300 text-zinc-950 shadow-amber-500/20"
-        : "bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-emerald-500/20";
-
-      return `
-        <div
-          data-popup-index="${index}"
-          data-card-id="${card.id}"
-          class="popup-suggestion-row px-3.5 py-2.5 hover:bg-zinc-900/95 transition flex items-center justify-between gap-3 cursor-pointer"
-          onclick="focusCardFromPopup('${card.id}')"
-        >
-          <div class="min-w-0 flex-1">
-            <div class="flex items-center gap-1.5">
-              <span class="text-xs sm:text-sm font-bold text-white truncate">${card.name}</span>
-              ${val.isVipCard ? `<span class="px-1.5 py-0.2 text-[9px] font-mono font-bold uppercase rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0">85% VIP $1k+</span>` : ""}
-              ${isRelated ? `<span class="px-1.5 py-0.2 text-[9px] font-mono font-bold uppercase rounded bg-purple-500/15 text-purple-300 border border-purple-500/30 shrink-0">Evo Line</span>` : ""}
-            </div>
-            <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-zinc-400 mt-0.5">
-              <span class="truncate">${card.set}</span>
-              <span class="font-mono text-zinc-300">#${card.number}</span>
-              <span class="px-1.5 py-0.2 rounded bg-zinc-900 border border-zinc-800 font-mono text-[10px] text-zinc-300">${badgeLabel}</span>
-            </div>
-            <div class="flex items-center gap-2.5 mt-1 text-[10px] font-mono text-zinc-500">
-              <span class="text-blue-400/90">TCG ${formatCurrency(val.tcg)}</span>
-              <span>•</span>
-              <span class="text-amber-400/90">eBay ${formatCurrency(val.ebay)}</span>
-              <span>•</span>
-              <span class="text-purple-400/90">Collectr ${formatCurrency(val.collectr)}</span>
-            </div>
-          </div>
-
-          <div class="flex items-center gap-2.5 shrink-0">
-            <div class="text-right">
-              <div class="text-[11px] text-zinc-400 font-mono">Mkt ${formatCurrency(val.blendedMarket)}</div>
-              <div class="text-xs sm:text-sm font-mono font-extrabold ${rateColorClass}">${formatCurrency(val.instantOffer)} <span class="text-[10px] font-normal">(${val.cardRate}%)</span></div>
-            </div>
-
-            <button
-              type="button"
-              onclick="event.stopPropagation(); addCardToSellLot('${card.id}');"
-              title="Add directly to Sell Lot at ${val.cardRate}%"
-              class="px-2.5 py-2 rounded-xl ${btnClass} font-extrabold text-[11px] shadow-md transition active:scale-95 cursor-pointer"
-            >
-              + Sell ${val.cardRate}%
-            </button>
-          </div>
+  <!-- Dedicated Preferred Payout Method Popup (Opens on Offer & Quote Commitment) -->
+  <div id="payoutMethodPopupModal" class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/85 backdrop-blur-sm" onclick="closePayoutMethodPopup()"></div>
+    <div class="relative w-full max-w-lg bg-zinc-900 border border-emerald-500/40 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="p-4 sm:p-5 bg-gradient-to-r from-emerald-950/60 via-zinc-900 to-purple-950/50 border-b border-zinc-800 flex items-center justify-between gap-3">
+        <div>
+          <span class="px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+            OFFER COMMITTED • PAYOUT SETUP
+          </span>
+          <h3 class="text-base sm:text-lg font-extrabold text-white mt-1">Where Should We Send Your Payout?</h3>
         </div>
-      `;
-    }
-            <!-- Bottom Row: Blended Market + Per-Card Sell Offer + Add to Lot CTA -->
-            <div class="flex items-center justify-between gap-2 pt-1">
-              <div>
-                <div class="text-[11px] text-zinc-400">
-                  Blended Avg: <span class="font-mono font-semibold text-zinc-200">${formatCurrency(val.blendedMarket)}</span>
-                </div>
-                <div class="flex items-baseline gap-1.5 mt-0.5">
-                  <span class="text-xs font-bold ${val.isVipCard ? 'text-amber-300' : 'text-emerald-400'}">${val.cardRate}% Sell:</span>
-                  <span class="text-base sm:text-lg font-mono font-extrabold ${val.isVipCard ? 'text-amber-300' : 'text-emerald-400'}">${formatCurrency(val.instantOffer)}</span>
-                </div>
-              </div>
-
-              <button
-                onclick="addCardToSellLot('${card.id}')"
-                class="px-3.5 py-2.5 rounded-xl ${val.isVipCard ? 'bg-amber-500/15 hover:bg-amber-400 text-amber-300 hover:text-zinc-950 border-amber-500/40' : 'bg-emerald-500/15 hover:bg-emerald-500 text-emerald-400 hover:text-zinc-950 border-emerald-500/40'} border font-bold text-xs transition active:scale-[0.97] flex items-center gap-1.5 cursor-pointer shrink-0"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                <span>Sell @ ${val.cardRate}%</span>
-              </button>
-            </div>
-          </article>
-        `;
-      }).join("");
-    }
-      if (mobileLabel) {
-        mobileLabel.textContent = qualifiesForVip ? "85% (VIP $1,000+)" : "75% (Standard)";
-      }
-
-      if (rateChanged && notifyOnUpgrade) {
-        if (qualifiesForVip) {
-          showToast("🎉 $1,000+ Market Threshold Reached! Offer automatically upgraded to 85%!");
-        } else {
-          showToast("Lot market value is below $1,000 — payout rate adjusted to 75%.");
-        }
-      }
-
-      return { lotMarketTotal, qualifiesForVip, payoutRate };
-    }
-
-    function getCardEffectiveSettings(cardId) {
-// ... existing code ... -->
-      renderSellLot(true);
-      showToast(`Added ${card.name} (${val.grade === "RAW" ? val.condition : GRADE_MULTIPLIERS[val.grade].badge}) to Sell Lot`);
-    }
-
-    function updateLotItemQty(lotItemId, delta) {
-      const idx = sellLot.findIndex(item => item.lotItemId === lotItemId);
-      if (idx === -1) return;
-
-      sellLot[idx].qty += delta;
-      if (sellLot[idx].qty <= 0) {
-        sellLot.splice(idx, 1);
-      }
-      renderSellLot(true);
-    }
-
-    function clearSellLot() {
-      if (sellLot.length === 0) return;
-      sellLot = [];
-      renderSellLot(false);
-      showToast("Sell lot cleared");
-    }
-
-    function renderSellLot(notifyOnTierChange = false) {
-      const { lotMarketTotal, qualifiesForVip } = evaluateAutomaticPayoutTier(notifyOnTierChange);
-
-      const desktopContainer = document.getElementById("sellLotItemsContainer");
-      const mobileContainer = document.getElementById("mobileLotItemsContainer");
-      const emptyPlaceholder = document.getElementById("emptyLotPlaceholder");
-      const executeBtn = document.getElementById("executeOfferBtn");
-
-      const totalQty = sellLot.reduce((sum, item) => sum + item.qty, 0);
-      document.getElementById("lotItemCountBadge").textContent = totalQty;
-      document.getElementById("mobileLotCountBadge").textContent = totalQty;
-      document.getElementById("mobileDrawerCount").textContent = totalQty;
-
-      document.getElementById("sidebarRateText").textContent = `${payoutRate}%`;
-      document.getElementById("payoutBoxPct").textContent = `${payoutRate}%`;
-      document.getElementById("mobileDrawerPct").textContent = `${payoutRate}%`;
-
-    function renderSellLot() {
-      const desktopContainer = document.getElementById("sellLotItemsContainer");
-      const mobileContainer = document.getElementById("mobileLotItemsContainer");
-      const emptyPlaceholder = document.getElementById("emptyLotPlaceholder");
-      const executeBtn = document.getElementById("executeOfferBtn");
-
-      const {
-        totalTcg,
-        totalEbay,
-        totalCollectr,
-        totalMarket,
-        totalCashPayout,
-        vipCardUnits,
-        effectiveBlendedPct
-      } = getSellLotTotals();
-
-      const totalQty = sellLot.reduce((sum, item) => sum + item.qty, 0);
-      const hasAnyVip = vipCardUnits > 0;
-      const pctDisplayLabel = hasAnyVip ? `${effectiveBlendedPct}% Blended` : `${BASE_PAYOUT_RATE}%`;
-
-      document.getElementById("lotItemCountBadge").textContent = totalQty;
-      document.getElementById("mobileLotCountBadge").textContent = totalQty;
-      document.getElementById("mobileDrawerCount").textContent = totalQty;
-
-      document.getElementById("payoutBoxPct").textContent = pctDisplayLabel;
-      document.getElementById("mobileDrawerPct").textContent = pctDisplayLabel;
-
-      const vipBadge = document.getElementById("vipCardCountBadge");
-      const vipStatusLabel = document.getElementById("vipRuleStatusLabel");
-      if (vipBadge && vipStatusLabel) {
-        vipBadge.textContent = `${vipCardUnits} VIP card${vipCardUnits === 1 ? "" : "s"}`;
-        if (hasAnyVip) {
-          vipBadge.className = "font-mono text-[10px] px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold";
-          vipStatusLabel.innerHTML = `<span class="text-amber-300 font-bold">85% VIP active</span> on ${vipCardUnits} card${vipCardUnits === 1 ? "" : "s"} ($1k+ each)`;
-        } else {
-          vipBadge.className = "font-mono text-[10px] px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-400";
-          vipStatusLabel.innerHTML = `Single cards $1,000+ auto-upgrade to <span class="text-amber-300 font-mono font-bold">85%</span>`;
-        }
-      }
-
-      if (sellLot.length === 0) {
-        desktopContainer.innerHTML = "";
-        desktopContainer.appendChild(emptyPlaceholder);
-        emptyPlaceholder.classList.remove("hidden");
-        mobileContainer.innerHTML = `<p class="text-xs text-zinc-500 text-center py-10">No cards added to your sell lot yet.</p>`;
-
-        document.getElementById("lotTcgTotal").textContent = "$0.00";
-        document.getElementById("lotEbayTotal").textContent = "$0.00";
-        document.getElementById("lotCollectrTotal").textContent = "$0.00";
-        document.getElementById("lotMarketTotal").textContent = "$0.00";
-        document.getElementById("lotCashPayout").textContent = "$0.00";
-        document.getElementById("mobileLotMarket").textContent = "$0.00";
-        document.getElementById("mobileLotPayout").textContent = "$0.00";
-        document.getElementById("feeAdvantageNote").classList.add("hidden");
-        executeBtn.disabled = true;
-        return;
-      }
-
-      executeBtn.disabled = false;
-
-      const itemsHTML = sellLot.map(item => {
-        const cardRate = getCardPayoutRate(item.blendedMarket);
-        const isVip = cardRate === VIP_PAYOUT_RATE;
-        const lineMarket = item.blendedMarket * item.qty;
-        const linePayout = lineMarket * (cardRate / 100);
-        const badgeText = item.grade === "RAW" ? item.condition : GRADE_MULTIPLIERS[item.grade].badge;
-
-        return `
-          <div class="p-3 rounded-xl bg-zinc-950 border ${isVip ? 'border-amber-500/40' : 'border-zinc-800/90'} flex items-center justify-between gap-2.5">
-            <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-1.5">
-                <span class="text-xs font-bold text-white truncate">${item.name}</span>
-                ${isVip ? `<span class="px-1.5 py-0.2 text-[9px] font-mono font-bold rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0">85% VIP</span>` : ""}
-              </div>
-              <div class="flex items-center gap-2 mt-1 text-[11px] text-zinc-400">
-                <span class="px-1.5 py-0.2 rounded bg-zinc-900 border border-zinc-800 font-mono text-[10px] text-zinc-300">${badgeText}</span>
-                <span>Mkt: <span class="font-mono text-zinc-300">${formatCurrency(lineMarket)}</span></span>
-              </div>
-            </div>
-
-            <div class="flex items-center gap-2.5 shrink-0">
-              <div class="text-right">
-                <div class="text-xs font-mono font-extrabold ${isVip ? 'text-amber-300' : 'text-emerald-400'}">${formatCurrency(linePayout)}</div>
-                <div class="text-[10px] ${isVip ? 'text-amber-300/80' : 'text-zinc-500'} font-mono">@ ${cardRate}%</div>
-              </div>
-
-              <!-- Qty Controls -->
-              <div class="flex items-center bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
-                <button
-                  type="button"
-                  onclick="updateLotItemQty('${item.lotItemId}', -1)"
-                  aria-label="Decrease quantity"
-                  class="px-2 py-1 text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-800 transition cursor-pointer"
-                >
-                  −
-                </button>
-                <span class="px-2 py-1 text-xs font-mono font-bold text-white">${item.qty}</span>
-                <button
-                  type="button"
-                  onclick="updateLotItemQty('${item.lotItemId}', 1)"
-                  aria-label="Increase quantity"
-                  class="px-2 py-1 text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-800 transition cursor-pointer"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join("");
-
-      desktopContainer.innerHTML = itemsHTML;
-      mobileContainer.innerHTML = itemsHTML;
-
-      document.getElementById("lotTcgTotal").textContent = formatCurrency(totalTcg);
-      document.getElementById("lotEbayTotal").textContent = formatCurrency(totalEbay);
-      document.getElementById("lotCollectrTotal").textContent = formatCurrency(totalCollectr);
-      document.getElementById("lotMarketTotal").textContent = formatCurrency(totalMarket);
-      document.getElementById("lotCashPayout").textContent = formatCurrency(totalCashPayout);
-
-      // Update fee & shipping savings breakdown (~13.25% marketplace fees + shipping saved)
-      const feeAdvantageNote = document.getElementById("feeAdvantageNote");
-      const feeSavedAmount = document.getElementById("feeSavedAmount");
-      if (totalMarket > 0) {
-        const estimatedMarketplaceFees = totalMarket * 0.1325 + (sellLot.length * 1.25);
-        feeSavedAmount.textContent = formatCurrency(estimatedMarketplaceFees);
-        feeAdvantageNote.classList.remove("hidden");
-      } else {
-        feeAdvantageNote.classList.add("hidden");
-      }
-
-      document.getElementById("mobileLotMarket").textContent = formatCurrency(totalMarket);
-      document.getElementById("mobileLotPayout").textContent = formatCurrency(totalCashPayout);
-    }
-
-    // =========================================================================
-    // 7. FILTER, SEARCH, POPUP KEYBOARD NAV & SLIDER EVENT HANDLERS
-    // =========================================================================
-    function updateCardOverride(cardId, field, value) {
-      if (!cardOverrides[cardId]) {
-        cardOverrides[cardId] = {};
-      }
-      cardOverrides[cardId][field] = value;
-      renderCards();
-    }
-
-    // =========================================================================
-    // 7B. ROTATING MOST RECENT SALES PANEL LOGIC
-    // =========================================================================
-    function renderRecentSalesPanel() {
-      const container = document.getElementById("recentSalesPanelBody");
-      const dotsContainer = document.getElementById("recentSalesDotButtons");
-      const statusText = document.getElementById("recentSalesStatusText");
-      if (!container || !dotsContainer || RECENT_SALES_FEED.length === 0) return;
-
-      recentSaleIndex = ((recentSaleIndex % RECENT_SALES_FEED.length) + RECENT_SALES_FEED.length) % RECENT_SALES_FEED.length;
-      const featured = RECENT_SALES_FEED[recentSaleIndex];
-      const featuredRate = getCardPayoutRate(featured.soldPrice);
-      const isFeaturedVip = featuredRate === VIP_PAYOUT_RATE;
-      const buybackOffer = featured.soldPrice * (featuredRate / 100);
-
-      // Build next 2 upcoming sales in rotation
-      const upcoming = [1, 2].map(offset => RECENT_SALES_FEED[(recentSaleIndex + offset) % RECENT_SALES_FEED.length]);
-
-      container.innerHTML = `
-        <div class="p-3.5 rounded-xl bg-zinc-950/95 border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all duration-300">
-          <div class="min-w-0 space-y-1">
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded-md border ${featured.sourceColor}">
-                ${featured.source}
-              </span>
-              <span class="text-[11px] font-mono text-zinc-500">${featured.timeAgo}</span>
-              <span class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-900 border border-zinc-800 text-zinc-300">
-                ${featured.conditionOrGrade}
-              </span>
-              ${isFeaturedVip ? `<span class="px-1.5 py-0.5 text-[10px] font-mono font-bold rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">85% VIP $1k+</span>` : ""}
-            </div>
-            <div class="text-sm sm:text-base font-extrabold text-white truncate">${featured.name}</div>
-            <div class="text-xs text-zinc-400 truncate">${featured.set}</div>
-          </div>
-
-          <div class="flex sm:flex-col items-center sm:items-end justify-between gap-2 shrink-0">
-            <div class="text-left sm:text-right">
-              <div class="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">Recent Sale</div>
-              <div class="text-base sm:text-lg font-mono font-extrabold text-white">${formatCurrency(featured.soldPrice)}</div>
-              <div class="text-xs font-mono font-bold ${isFeaturedVip ? 'text-amber-300' : 'text-emerald-400'}">
-                ${featuredRate}% Offer: ${formatCurrency(buybackOffer)}
-              </div>
-            </div>
-            <button
-              type="button"
-              onclick="addCardToSellLot('${featured.cardId}')"
-              class="px-3 py-1.5 rounded-xl ${isFeaturedVip ? 'bg-amber-400 hover:bg-amber-300 text-zinc-950 shadow-amber-500/20' : 'bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-emerald-500/20'} font-extrabold text-xs shadow-md transition cursor-pointer"
-            >
-              + Sell @ ${featuredRate}%
-            </button>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          ${upcoming.map(item => {
-            const upRate = getCardPayoutRate(item.soldPrice);
-            return `
-            <button
-              type="button"
-              onclick="addCardToSellLot('${item.cardId}')"
-              class="p-2.5 rounded-xl bg-zinc-950/60 hover:bg-zinc-950 border border-zinc-800/70 hover:border-zinc-700 text-left flex items-center justify-between gap-2 transition cursor-pointer"
-            >
-              <div class="min-w-0">
-                <div class="text-xs font-bold text-zinc-200 truncate">${item.name}</div>
-                <div class="text-[10px] font-mono text-zinc-500 truncate">${item.source} • ${item.timeAgo}</div>
-              </div>
-              <div class="text-right shrink-0">
-                <div class="text-xs font-mono font-bold text-zinc-200">${formatCurrency(item.soldPrice)}</div>
-                <div class="text-[10px] font-mono font-bold ${upRate === VIP_PAYOUT_RATE ? 'text-amber-300' : 'text-emerald-400'}">${formatCurrency(item.soldPrice * (upRate / 100))} @ ${upRate}%</div>
-              </div>
-            </button>
-          `;
-          }).join("")}
-        </div>
-      `;
-
-      dotsContainer.innerHTML = RECENT_SALES_FEED.map((item, idx) => `
         <button
           type="button"
-          onclick="jumpToRecentSale(${idx})"
-          aria-label="Show recent sale ${idx + 1}: ${item.name}"
-          class="h-2 rounded-full transition-all cursor-pointer ${idx === recentSaleIndex ? "w-6 bg-emerald-400" : "w-2 bg-zinc-700 hover:bg-zinc-500"}"
-        ></button>
-      `).join("");
+          onclick="closePayoutMethodPopup()"
+          aria-label="Close payout method popup"
+          class="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center cursor-pointer shrink-0"
+        >
+          ✕
+        </button>
+      </div>
 
-      if (statusText) {
-        statusText.textContent = isRecentSalesRotating
-          ? `Sale ${recentSaleIndex + 1} of ${RECENT_SALES_FEED.length} • Auto-rotating every 4s`
-          : `Sale ${recentSaleIndex + 1} of ${RECENT_SALES_FEED.length} • Paused`;
-      }
-    }
+      <form id="preferredPayoutPopupForm" onsubmit="submitPreferredPayoutPopup(event)" class="p-4 sm:p-5 overflow-y-auto space-y-4">
+        <!-- Committed Quote & Payout Summary -->
+        <div class="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-between gap-3">
+          <div>
+            <div class="text-[11px] font-mono text-zinc-400">Quote <span id="popupQuoteId" class="text-white font-bold">PV-000000</span></div>
+            <div class="text-xs text-zinc-300 font-semibold mt-0.5">Locked Cash Payout Total</div>
+          </div>
+          <div id="popupLockedPayoutAmount" class="text-xl sm:text-2xl font-mono font-extrabold text-emerald-400">$0.00</div>
+        </div>
 
-    function stepRecentSales(delta) {
-      recentSaleIndex += delta;
-      renderRecentSalesPanel();
-    }
+        <!-- Quick Payment Method Pills (Venmo, PayPal, Zelle, Cash App, Other) -->
+        <div>
+          <label class="block text-[11px] font-semibold text-zinc-300 mb-1.5">Select Preferred Payout System *</label>
+          <div id="payoutSystemQuickPills" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <button type="button" data-payout-system="Venmo" onclick="selectPopupPayoutSystem('Venmo')" class="payout-system-pill px-3 py-2 rounded-xl text-xs font-bold bg-zinc-950 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 transition cursor-pointer">Venmo</button>
+            <button type="button" data-payout-system="PayPal" onclick="selectPopupPayoutSystem('PayPal')" class="payout-system-pill px-3 py-2 rounded-xl text-xs font-bold bg-zinc-950 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 transition cursor-pointer">PayPal</button>
+            <button type="button" data-payout-system="Zelle" onclick="selectPopupPayoutSystem('Zelle')" class="payout-system-pill px-3 py-2 rounded-xl text-xs font-bold bg-zinc-950 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 transition cursor-pointer">Zelle</button>
+            <button type="button" data-payout-system="Cash App" onclick="selectPopupPayoutSystem('Cash App')" class="payout-system-pill px-3 py-2 rounded-xl text-xs font-bold bg-zinc-950 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 transition cursor-pointer">Cash App</button>
+            <button type="button" data-payout-system="Apple Cash" onclick="selectPopupPayoutSystem('Apple Cash')" class="payout-system-pill px-3 py-2 rounded-xl text-xs font-bold bg-zinc-950 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 transition cursor-pointer">Apple Cash</button>
+            <button type="button" data-payout-system="Other" onclick="selectPopupPayoutSystem('Other')" class="payout-system-pill px-3 py-2 rounded-xl text-xs font-bold bg-zinc-950 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 transition cursor-pointer">Other Method</button>
+          </div>
+        </div>
 
-    function jumpToRecentSale(idx) {
-      recentSaleIndex = idx;
-      renderRecentSalesPanel();
-    }
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="popupPayoutSystemSelect" class="block text-[11px] font-semibold text-zinc-300 mb-1">Payout Platform / System *</label>
+            <select
+              id="popupPayoutSystemSelect"
+              onchange="handlePopupPayoutSystemChange()"
+              class="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 focus:border-emerald-500 rounded-xl text-xs text-white outline-none cursor-pointer"
+            >
+              <option value="Venmo">Venmo</option>
+              <option value="PayPal">PayPal</option>
+              <option value="Zelle">Zelle</option>
+              <option value="Cash App">Cash App</option>
+              <option value="Apple Cash">Apple Cash</option>
+              <option value="Other">Other (Custom Method)</option>
+            </select>
+          </div>
 
-    function toggleRecentSalesRotation() {
-      isRecentSalesRotating = !isRecentSalesRotating;
-      const btn = document.getElementById("toggleSalesRotationBtn");
-      if (btn) btn.textContent = isRecentSalesRotating ? "Pause" : "Resume";
-      if (isRecentSalesRotating) {
-        startRecentSalesRotation();
-      } else if (recentSalesTimer) {
-        clearInterval(recentSalesTimer);
-        recentSalesTimer = null;
-      }
-      renderRecentSalesPanel();
-    }
+          <div id="popupCustomSystemWrapper" class="hidden">
+            <label for="popupCustomSystemName" class="block text-[11px] font-semibold text-zinc-300 mb-1">Specify Other Payment System *</label>
+            <input
+              id="popupCustomSystemName"
+              type="text"
+              placeholder="e.g. Bank Wire, Chime, Check, Crypto"
+              class="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 focus:border-emerald-500 rounded-xl text-xs text-white outline-none"
+            />
+          </div>
 
-    function startRecentSalesRotation() {
-      if (recentSalesTimer) clearInterval(recentSalesTimer);
-      recentSalesTimer = setInterval(() => {
-        if (isRecentSalesRotating) {
-          recentSaleIndex = (recentSaleIndex + 1) % RECENT_SALES_FEED.length;
-          renderRecentSalesPanel();
-        }
-      }, 4000);
-    }
+          <div id="popupAccountHandleWrapper" class="sm:col-span-2">
+            <label id="popupPayoutAccountLabel" for="popupPayoutAccountInput" class="block text-[11px] font-semibold text-zinc-300 mb-1">Your Venmo @Handle, Email, or Phone *</label>
+            <input
+              id="popupPayoutAccountInput"
+              type="text"
+              required
+              placeholder="e.g. @your-venmo-username"
+              class="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 focus:border-emerald-500 rounded-xl text-xs font-mono text-white outline-none"
+            />
+          </div>
+        </div>
 
-    document.getElementById("searchInput").addEventListener("input", e => {
-      searchQuery = e.target.value;
-      const trimmed = searchQuery.trim();
-      document.getElementById("clearSearchBtn").classList.toggle("hidden", !trimmed);
-      renderCards();
-      if (trimmed.length > 0) {
-        renderSimilarCardsPopup(trimmed);
-      } else {
-        closeSimilarPopup();
-      }
-    });
+        <div>
+          <label for="popupPayoutNotes" class="block text-[11px] font-semibold text-zinc-300 mb-1">Payout Note / Backup Handle (Optional)</label>
+          <input
+            id="popupPayoutNotes"
+            type="text"
+            placeholder="e.g. Backup PayPal email or preferred payout timing"
+            class="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 focus:border-emerald-500 rounded-xl text-xs text-white outline-none"
+          />
+        </div>
 
-    document.getElementById("searchInput").addEventListener("focus", e => {
-      const trimmed = e.target.value.trim();
-      if (trimmed.length > 0) {
-        renderSimilarCardsPopup(trimmed);
-      } else {
-        closeSimilarPopup();
-      }
-    });
+        <div class="pt-1 flex flex-wrap items-center justify-end gap-2.5">
+          <button
+            type="button"
+            onclick="closePayoutMethodPopup()"
+            class="px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-semibold text-xs transition cursor-pointer"
+          >
+            Back to Quote
+          </button>
+          <button
+            type="submit"
+            class="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-extrabold text-xs shadow-lg shadow-emerald-500/20 transition cursor-pointer"
+          >
+            Save Payout Method &amp; Lock Ticket
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-    function clearSearch() {
-      searchQuery = "";
-      document.getElementById("searchInput").value = "";
-      document.getElementById("clearSearchBtn").classList.add("hidden");
-      closeSimilarPopup();
-      renderCards();
-    }
-
-    document.getElementById("globalConditionSelect").addEventListener("change", e => {
-      globalCondition = e.target.value;
-      cardOverrides = {}; // Reset per-card overrides so global applies cleanly
-      renderCards();
-    });
-
-    document.getElementById("globalGradeSelect").addEventListener("change", e => {
-      globalGrade = e.target.value;
-      cardOverrides = {};
-      renderCards();
-    });
-
-    document.getElementById("sortSelect").addEventListener("change", e => {
-      sortBy = e.target.value;
-      renderCards();
-    });
-
-    document.querySelectorAll(".era-pill").forEach(btn => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".era-pill").forEach(b => {
-          b.classList.remove("bg-purple-600", "text-white", "active");
-          b.classList.add("bg-zinc-950", "text-zinc-400", "border", "border-zinc-800");
-        });
-        btn.classList.remove("bg-zinc-950", "text-zinc-400", "border", "border-zinc-800");
-        btn.classList.add("bg-purple-600", "text-white", "active");
-        activeEra = btn.dataset.era;
-        renderCards();
-      });
-    });
-
+  <script>
+// ... existing code ... -->
     // =========================================================================
     // 9. QUOTE / SELL OFFER RECEIPT MODAL & AUTOMATED PAYOUT INTAKE
     // =========================================================================
     let currentQuoteId = "";
+    let savedPayoutPreference = {
+      system: "Venmo",
+      customSystem: "",
+      account: "",
+      notes: ""
+    };
 
-    function updatePayoutHandlePlaceholder() {
-      const method = document.getElementById("sellerPayoutMethod").value;
-      const input = document.getElementById("sellerPayoutHandle");
-      if (!input) return;
-      const placeholders = {
-        "PayPal Goods & Services": "e.g. name@email.com or @paypalhandle",
-        "PayPal Friends & Family": "e.g. name@email.com or @paypalhandle",
-        "Venmo": "e.g. @Your-Venmo-Handle",
-        "Zelle": "e.g. Phone number or Zelle email",
-        "Cash App": "e.g. $YourCashtag",
-        "In-Person Cash": "e.g. Phone # to coordinate local meetup"
+    function getResolvedPayoutSystemLabel() {
+      if (savedPayoutPreference.system === "Other") {
+        return savedPayoutPreference.customSystem.trim() || "Other Method";
+      }
+      return savedPayoutPreference.system || "Venmo";
+    }
+
+    function syncPayoutDetailsToMainForm() {
+      const methodSelect = document.getElementById("sellerPayoutMethod");
+      const handleInput = document.getElementById("sellerPayoutHandle");
+      const resolvedLabel = getResolvedPayoutSystemLabel();
+
+      if (methodSelect) {
+        const optionMap = {
+          "Venmo": "Venmo",
+          "PayPal": "PayPal Goods & Services",
+          "Zelle": "Zelle",
+          "Cash App": "Cash App"
+        };
+        const mappedOption = optionMap[savedPayoutPreference.system];
+        if (mappedOption) {
+          methodSelect.value = mappedOption;
+        }
+      }
+
+      if (handleInput && savedPayoutPreference.account.trim()) {
+        const suffix = savedPayoutPreference.notes.trim()
+          ? ` (${resolvedLabel} • Note: ${savedPayoutPreference.notes.trim()})`
+          : ` (${resolvedLabel})`;
+        handleInput.value = `${savedPayoutPreference.account.trim()}${suffix}`;
+      }
+    }
+
+    function highlightPopupSystemPill(systemName) {
+      document.querySelectorAll(".payout-system-pill").forEach(pill => {
+        const active = pill.dataset.payoutSystem === systemName;
+        pill.classList.toggle("bg-emerald-500/20", active);
+        pill.classList.toggle("text-emerald-300", active);
+        pill.classList.toggle("border-emerald-500/50", active);
+        pill.classList.toggle("bg-zinc-950", !active);
+        pill.classList.toggle("text-zinc-200", !active);
+        pill.classList.toggle("border-zinc-800", !active);
+      });
+    }
+
+    function handlePopupPayoutSystemChange() {
+      const selectEl = document.getElementById("popupPayoutSystemSelect");
+      const customWrapper = document.getElementById("popupCustomSystemWrapper");
+      const accountWrapper = document.getElementById("popupAccountHandleWrapper");
+      const accountLabel = document.getElementById("popupPayoutAccountLabel");
+      const accountInput = document.getElementById("popupPayoutAccountInput");
+      if (!selectEl) return;
+
+      const selected = selectEl.value;
+      highlightPopupSystemPill(selected);
+
+      const isOther = selected === "Other";
+      if (customWrapper) customWrapper.classList.toggle("hidden", !isOther);
+      if (accountWrapper) {
+        accountWrapper.classList.toggle("sm:col-span-2", !isOther);
+        accountWrapper.classList.toggle("sm:col-span-1", isOther);
+      }
+
+      const labelsAndPlaceholders = {
+        "Venmo": {
+          label: "Your Venmo @Handle, Email, or Phone *",
+          placeholder: "e.g. @your-venmo-handle"
+        },
+        "PayPal": {
+          label: "Your PayPal Email or paypal.me Link *",
+          placeholder: "e.g. name@email.com or paypal.me/yourname"
+        },
+        "Zelle": {
+          label: "Your Zelle Registered Email or Phone *",
+          placeholder: "e.g. (555) 123-4567 or zelle@email.com"
+        },
+        "Cash App": {
+          label: "Your Cash App $Cashtag *",
+          placeholder: "e.g. $YourCashtag"
+        },
+        "Apple Cash": {
+          label: "Your Apple Cash Phone Number or Apple ID *",
+          placeholder: "e.g. (555) 123-4567 or appleid@icloud.com"
+        },
+        "Other": {
+          label: "Your Payout Handle / Account / Address *",
+          placeholder: "Enter handle, account ID, or payment details"
+        }
       };
-      input.placeholder = placeholders[method] || "Enter payout handle or email";
+
+      const cfg = labelsAndPlaceholders[selected] || labelsAndPlaceholders["Other"];
+      if (accountLabel) accountLabel.textContent = cfg.label;
+      if (accountInput) accountInput.placeholder = cfg.placeholder;
     }
 
-    function openQuoteModal() {
-      if (sellLot.length === 0) return;
-
-      const { totalMarket, totalCashPayout, vipCardUnits, effectiveBlendedPct } = getSellLotTotals();
-      const hasAnyVip = vipCardUnits > 0;
-      const pctSummary = hasAnyVip ? `${effectiveBlendedPct}% Blended` : `${BASE_PAYOUT_RATE}%`;
-
-      currentQuoteId = `PV-${Math.floor(100000 + Math.random() * 900000)}`;
-      document.getElementById("quoteIdDisplay").textContent = currentQuoteId;
-      document.getElementById("quoteTierDisplay").textContent = hasAnyVip
-        ? `75% Standard + 85% VIP (${vipCardUnits} card${vipCardUnits === 1 ? "" : "s"} $1k+)`
-        : "75% Standard Cash";
-      document.getElementById("quotePctLabel").textContent = pctSummary;
-      document.getElementById("quoteDateDisplay").textContent = new Date().toLocaleDateString("en-US", {
-        month: "short", day: "numeric", year: "numeric"
-      });
-
-      // Reset confirmation panel state on reopen
-      document.getElementById("confirmedTicketPanel").classList.add("hidden");
-
-      const tbody = document.getElementById("quoteTableBody");
-      tbody.innerHTML = sellLot.map(item => {
-        const cardRate = getCardPayoutRate(item.blendedMarket);
-        const isVip = cardRate === VIP_PAYOUT_RATE;
-        const lineMarket = item.blendedMarket * item.qty;
-        const linePayout = lineMarket * (cardRate / 100);
-        const badgeText = item.grade === "RAW" ? item.condition : GRADE_MULTIPLIERS[item.grade].badge;
-
-        return `
-          <tr>
-            <td class="py-2.5 px-3">
-              <div class="font-bold text-white">${item.qty}x ${item.name}</div>
-              <div class="text-[11px] text-zinc-400">${item.set} (#${item.number}) • <span class="text-zinc-300 font-mono">${badgeText}</span></div>
-            </td>
-            <td class="py-2.5 px-3 text-right font-mono text-zinc-300">${formatCurrency(lineMarket)}</td>
-            <td class="py-2.5 px-3 text-right font-mono font-bold ${isVip ? 'text-amber-300' : 'text-zinc-400'}">${cardRate}%</td>
-            <td class="py-2.5 px-3 text-right font-mono font-bold ${isVip ? 'text-amber-300' : 'text-emerald-400'}">${formatCurrency(linePayout)}</td>
-          </tr>
-        `;
-      }).join("");
-
-      document.getElementById("quoteMarketTotal").textContent = formatCurrency(totalMarket);
-      document.getElementById("quoteCashTotal").textContent = formatCurrency(totalCashPayout);
-
-      const modal = document.getElementById("quoteModal");
-      modal.classList.remove("hidden");
-      modal.classList.add("flex");
-    }
-
-    function closeQuoteModal() {
-      const modal = document.getElementById("quoteModal");
-      modal.classList.add("hidden");
-      modal.classList.remove("flex");
-    }
-
-    function buildFormattedTicketText() {
-      const quoteId = document.getElementById("quoteIdDisplay").textContent || currentQuoteId;
-      const { totalMarket, totalCashPayout, vipCardUnits, effectiveBlendedPct } = getSellLotTotals();
-      const hasAnyVip = vipCardUnits > 0;
-      const pctSummary = hasAnyVip ? `${effectiveBlendedPct}% Blended (75% Std / 85% Cards $1k+)` : "75% Standard";
-
-      const sellerName = (document.getElementById("sellerFullName")?.value || "").trim();
-      const sellerContact = (document.getElementById("sellerContactEmail")?.value || "").trim();
-      const payoutMethod = document.getElementById("sellerPayoutMethod")?.value || "Not selected";
-      const payoutHandle = (document.getElementById("sellerPayoutHandle")?.value || "").trim();
-      const deliveryMethod = document.getElementById("sellerDeliveryMethod")?.value || "Tracked Mail-In";
-      const returnAddress = (document.getElementById("sellerReturnAddress")?.value || "").trim();
-
-      const lines = sellLot.map(item => {
-        const cardRate = getCardPayoutRate(item.blendedMarket);
-        const lineMarket = item.blendedMarket * item.qty;
-        const linePayout = lineMarket * (cardRate / 100);
-        const condBadge = item.grade === "RAW" ? item.condition : GRADE_MULTIPLIERS[item.grade].badge;
-        return `• ${item.qty}x ${item.name} [${condBadge}] — Mkt: ${formatCurrency(lineMarket)} | ${cardRate}% Offer: ${formatCurrency(linePayout)}`;
-      });
-
-      const sellerSection = sellerName
-        ? [
-            ``,
-            `SELLER & PAYOUT DETAILS`,
-            `----------------------------------------------------`,
-            `Seller: ${sellerName} (${sellerContact})`,
-            `Payout Method: ${payoutMethod}`,
-            `Payout Handle/Acct: ${payoutHandle}`,
-            `Handoff Method: ${deliveryMethod}`,
-            `Return Address / City: ${returnAddress}`
-          ]
-        : [];
-
-      return [
-        `POKÉVAULT INSTANT BUYLIST TICKET (${quoteId})`,
-        `Refs: TCGPlayer + eBay Last Sold + Collectr Blended Index`,
-        `Payout Rule: ${pctSummary}`,
-        `----------------------------------------------------`,
-        ...lines,
-        `----------------------------------------------------`,
-        `Total Blended Market Value: ${formatCurrency(totalMarket)}`,
-        `Net Instant Cash Payout: ${formatCurrency(totalCashPayout)}`,
-        ...sellerSection
-      ].join("\n");
-    }
-
-    function copyTextToClipboard(text) {
-      const textarea = document.createElement("textarea");
-      textarea.value = text;
-      document.body.appendChild(textarea);
-      textarea.select();
-      let ok = false;
-      try {
-        ok = document.execCommand("copy");
-      } catch (err) {
-        ok = false;
-      }
-      document.body.removeChild(textarea);
-      return ok;
-    }
-
-    function copyQuoteReceipt() {
-      const receiptText = buildFormattedTicketText();
-      if (copyTextToClipboard(receiptText)) {
-        showToast("Formatted payout ticket copied to clipboard!");
-      } else {
-        showToast("Unable to copy ticket automatically.");
+    function selectPopupPayoutSystem(systemName) {
+      const selectEl = document.getElementById("popupPayoutSystemSelect");
+      if (selectEl) {
+        selectEl.value = systemName;
+        handlePopupPayoutSystemChange();
       }
     }
 
-    function confirmSaleSubmission(e) {
+    function openPayoutMethodPopup() {
+      const { totalCashPayout } = getSellLotTotals();
+      const quoteId = document.getElementById("quoteIdDisplay")?.textContent || currentQuoteId || "PV-000000";
+
+      const quoteIdEl = document.getElementById("popupQuoteId");
+      const amountEl = document.getElementById("popupLockedPayoutAmount");
+      if (quoteIdEl) quoteIdEl.textContent = quoteId;
+      if (amountEl) amountEl.textContent = formatCurrency(totalCashPayout);
+
+      const selectEl = document.getElementById("popupPayoutSystemSelect");
+      const customEl = document.getElementById("popupCustomSystemName");
+      const accountEl = document.getElementById("popupPayoutAccountInput");
+      const notesEl = document.getElementById("popupPayoutNotes");
+
+      if (selectEl) selectEl.value = savedPayoutPreference.system || "Venmo";
+      if (customEl) customEl.value = savedPayoutPreference.customSystem || "";
+      if (accountEl) accountEl.value = savedPayoutPreference.account || "";
+      if (notesEl) notesEl.value = savedPayoutPreference.notes || "";
+
+      handlePopupPayoutSystemChange();
+
+      const popup = document.getElementById("payoutMethodPopupModal");
+      if (popup) {
+        popup.classList.remove("hidden");
+        popup.classList.add("flex");
+      }
+    }
+
+    function closePayoutMethodPopup() {
+      const popup = document.getElementById("payoutMethodPopupModal");
+      if (popup) {
+        popup.classList.add("hidden");
+        popup.classList.remove("flex");
+      }
+    }
+
+    function submitPreferredPayoutPopup(e) {
       if (e) e.preventDefault();
+
+      const system = document.getElementById("popupPayoutSystemSelect")?.value || "Venmo";
+      const customSystem = (document.getElementById("popupCustomSystemName")?.value || "").trim();
+      const account = (document.getElementById("popupPayoutAccountInput")?.value || "").trim();
+      const notes = (document.getElementById("popupPayoutNotes")?.value || "").trim();
+
+      if (!account) {
+        showToast("Please enter your payout handle, email, or account.");
+        return;
+      }
+      if (system === "Other" && !customSystem) {
+        showToast("Please enter the name of your preferred payment method.");
+        return;
+      }
+
+      savedPayoutPreference = { system, customSystem, account, notes };
+      syncPayoutDetailsToMainForm();
+      closePayoutMethodPopup();
 
       const ticketText = buildFormattedTicketText();
       const previewEl = document.getElementById("confirmedTicketPreview");
@@ -1968,231 +961,77 @@
         panelEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }
 
-      // Save ticket record locally for seller reference
       try {
         const existing = JSON.parse(localStorage.getItem("pokevault_tickets") || "[]");
         existing.unshift({
           quoteId: currentQuoteId,
           createdAt: new Date().toISOString(),
+          payoutPreference: savedPayoutPreference,
           ticket: ticketText
         });
         localStorage.setItem("pokevault_tickets", JSON.stringify(existing.slice(0, 20)));
       } catch (err) {
-        // Ignore storage quota errors
+        // Ignore storage errors
       }
 
       copyTextToClipboard(ticketText);
-      showToast(`Offer ${currentQuoteId} locked in & ticket copied!`);
+      showToast(`${getResolvedPayoutSystemLabel()} payout saved & ticket copied!`);
+    }
+
+    function updatePayoutHandlePlaceholder() {
+// ... existing code ... -->
+      const sellerName = (document.getElementById("sellerFullName")?.value || "").trim();
+      const sellerContact = (document.getElementById("sellerContactEmail")?.value || "").trim();
+      const payoutMethod = document.getElementById("sellerPayoutMethod")?.value || "Not selected";
+      const payoutHandle = (document.getElementById("sellerPayoutHandle")?.value || "").trim();
+      const deliveryMethod = document.getElementById("sellerDeliveryMethod")?.value || "Tracked Mail-In";
+      const returnAddress = (document.getElementById("sellerReturnAddress")?.value || "").trim();
+
+      const resolvedPreferredSystem = savedPayoutPreference.account.trim()
+        ? `${getResolvedPayoutSystemLabel()} (${savedPayoutPreference.account.trim()}${savedPayoutPreference.notes.trim() ? ` • Note: ${savedPayoutPreference.notes.trim()}` : ""})`
+        : "";
+
+      const lines = sellLot.map(item => {
+        const cardRate = getCardPayoutRate(item.blendedMarket);
+        const lineMarket = item.blendedMarket * item.qty;
+        const linePayout = lineMarket * (cardRate / 100);
+        const condBadge = item.grade === "RAW" ? item.condition : GRADE_MULTIPLIERS[item.grade].badge;
+        return `• ${item.qty}x ${item.name} [${condBadge}] — Mkt: ${formatCurrency(lineMarket)} | ${cardRate}% Offer: ${formatCurrency(linePayout)}`;
+      });
+
+      const hasSellerDetails = Boolean(sellerName || sellerContact || payoutHandle || returnAddress || resolvedPreferredSystem);
+      const sellerSection = hasSellerDetails
+        ? [
+            ``,
+            `SELLER & PAYOUT DETAILS`,
+            `----------------------------------------------------`,
+            sellerName || sellerContact ? `Seller: ${sellerName || "Customer"} (${sellerContact || "No contact entered"})` : null,
+            resolvedPreferredSystem ? `Preferred Payout System: ${resolvedPreferredSystem}` : null,
+            `Payout Method: ${payoutMethod}`,
+            payoutHandle ? `Payout Handle/Acct: ${payoutHandle}` : null,
+            `Handoff Method: ${deliveryMethod}`,
+            returnAddress ? `Return Address / City: ${returnAddress}` : null
+          ].filter(Boolean)
+        : [];
+// ... existing code ... -->
+    function confirmSaleSubmission(e) {
+      if (e) e.preventDefault();
+
+      const currentHandle = (document.getElementById("sellerPayoutHandle")?.value || "").trim();
+      const currentMethod = document.getElementById("sellerPayoutMethod")?.value || "Venmo";
+      if (!savedPayoutPreference.account.trim() && currentHandle) {
+        savedPayoutPreference = {
+          system: currentMethod.includes("PayPal") ? "PayPal" : currentMethod,
+          customSystem: "",
+          account: currentHandle,
+          notes: ""
+        };
+      }
+
+      openPayoutMethodPopup();
     }
 
     // =========================================================================
     // 9B. SHAREABLE LINK GENERATOR (URL HASH STATE)
     // =========================================================================
-    function buildShareableUrl() {
-      try {
-        const compactLot = sellLot.map(item => ({
-          c: item.cardId,
-          cond: item.condition,
-          g: item.grade,
-          q: item.qty
-        }));
-        const payload = {
-          cond: globalCondition,
-          g: globalGrade,
-          era: activeEra,
-          q: searchQuery.trim(),
-          lot: compactLot
-        };
-        const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
-        const baseHref = window.location.href.split("#")[0];
-        return `${baseHref}#v1=${encoded}`;
-      } catch (err) {
-        return window.location.href;
-      }
-    }
-
-    function applySharedUrlState() {
-      try {
-        const hash = window.location.hash || "";
-        if (!hash.startsWith("#v1=")) return;
-        const encoded = hash.slice(4);
-        if (!encoded) return;
-
-        const jsonStr = decodeURIComponent(escape(atob(encoded)));
-        const payload = JSON.parse(jsonStr);
-
-        if (typeof payload.cond === "string" && CONDITION_MULTIPLIERS[payload.cond]) {
-          globalCondition = payload.cond;
-          const condSelect = document.getElementById("globalConditionSelect");
-          if (condSelect) condSelect.value = globalCondition;
-        }
-
-        if (typeof payload.g === "string" && GRADE_MULTIPLIERS[payload.g]) {
-          globalGrade = payload.g;
-          const gradeSelect = document.getElementById("globalGradeSelect");
-          if (gradeSelect) gradeSelect.value = globalGrade;
-        }
-
-        if (typeof payload.era === "string") {
-          activeEra = payload.era;
-          document.querySelectorAll(".era-pill").forEach(b => {
-            const matched = b.dataset.era === activeEra;
-            b.classList.toggle("bg-purple-600", matched);
-            b.classList.toggle("text-white", matched);
-            b.classList.toggle("active", matched);
-            b.classList.toggle("bg-zinc-950", !matched);
-            b.classList.toggle("text-zinc-400", !matched);
-            b.classList.toggle("border", !matched);
-            b.classList.toggle("border-zinc-800", !matched);
-          });
-        }
-
-        if (Array.isArray(payload.lot) && payload.lot.length > 0) {
-          const restoredLot = [];
-          payload.lot.forEach(entry => {
-            const card = cards.find(c => c.id === entry.c);
-            const cond = CONDITION_MULTIPLIERS[entry.cond] ? entry.cond : "NM";
-            const grade = GRADE_MULTIPLIERS[entry.g] ? entry.g : "RAW";
-            const qty = Math.max(1, parseInt(entry.q, 10) || 1);
-            if (!card) return;
-
-            const condMult = grade === "RAW" ? CONDITION_MULTIPLIERS[cond].factor : 1.0;
-            const gradeMult = GRADE_MULTIPLIERS[grade].factor;
-            const mult = condMult * gradeMult;
-            const tcg = card.tcgPrice * mult;
-            const ebay = card.ebayPrice * mult;
-            const collectr = card.collectrPrice * mult;
-            const blendedMarket = (tcg + ebay + collectr) / 3;
-
-            restoredLot.push({
-              lotItemId: `${card.id}-${cond}-${grade}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-              cardId: card.id,
-              name: card.name,
-              set: card.set,
-              number: card.number,
-              condition: cond,
-              grade,
-              tcg,
-              ebay,
-              collectr,
-              blendedMarket,
-              qty
-            });
-          });
-          if (restoredLot.length > 0) {
-            sellLot = restoredLot;
-          }
-        }
-
-        if (typeof payload.q === "string" && payload.q.trim().length > 0) {
-          searchQuery = payload.q.trim();
-          const input = document.getElementById("searchInput");
-          if (input) input.value = searchQuery;
-          const clearBtn = document.getElementById("clearSearchBtn");
-          if (clearBtn) clearBtn.classList.remove("hidden");
-        }
-      } catch (err) {
-        // Ignore malformed share hashes safely
-      }
-    }
-
-    function openShareModal() {
-      const shareUrl = buildShareableUrl();
-      const input = document.getElementById("shareUrlInput");
-      if (input) input.value = shareUrl;
-
-      const { vipCardUnits, effectiveBlendedPct } = getSellLotTotals();
-      const rateLabelText = vipCardUnits > 0 ? `${effectiveBlendedPct}% Blended (75% / 85% VIP)` : "75% / 85% VIP ($1k+ cards)";
-
-      const rateLabel = document.getElementById("shareModalRateLabel");
-      if (rateLabel) rateLabel.textContent = rateLabelText;
-
-      const lotQty = sellLot.reduce((sum, item) => sum + item.qty, 0);
-      const gradeLabel = GRADE_MULTIPLIERS[globalGrade]?.badge || "RAW";
-      const summaryEl = document.getElementById("shareSummaryDetails");
-      if (summaryEl) {
-        summaryEl.textContent = `${rateLabelText} • ${globalCondition} / ${gradeLabel} • ${lotQty} item${lotQty === 1 ? "" : "s"} in Sell Lot`;
-      }
-
-      const notice = document.getElementById("sharePreviewNotice");
-      const originType = document.getElementById("shareOriginType");
-      const isSandboxOrLocal =
-        window.location.protocol === "blob:" ||
-        window.location.protocol === "file:" ||
-        window.location.origin === "null" ||
-        !window.location.hostname;
-
-      if (notice) {
-        if (isSandboxOrLocal) {
-          if (originType) originType.textContent = window.location.protocol || "sandboxed preview";
-          notice.classList.remove("hidden");
-        } else {
-          notice.classList.add("hidden");
-        }
-      }
-
-      const modal = document.getElementById("shareLinkModal");
-      if (modal) {
-        modal.classList.remove("hidden");
-        modal.classList.add("flex");
-      }
-    }
-
-    function closeShareModal() {
-      const modal = document.getElementById("shareLinkModal");
-      if (modal) {
-        modal.classList.add("hidden");
-        modal.classList.remove("flex");
-      }
-    }
-
-    function copyShareLink() {
-      const url = buildShareableUrl();
-      const input = document.getElementById("shareUrlInput");
-      if (input) input.value = url;
-
-      const textarea = document.createElement("textarea");
-      textarea.value = url;
-      document.body.appendChild(textarea);
-      textarea.select();
-      try {
-        document.execCommand("copy");
-        showToast("Share link copied to clipboard!");
-      } catch (err) {
-        showToast("Select the link box and press Ctrl/Cmd + C to copy.");
-      }
-      document.body.removeChild(textarea);
-    }
-
-    // =========================================================================
-    // 10. MOBILE DRAWER & TOAST NOTIFICATIONS
-    // =========================================================================
-    function toggleMobileLot() {
-      const drawer = document.getElementById("mobileLotDrawer");
-      if (drawer) drawer.classList.toggle("hidden");
-    }
-
-    function showToast(message) {
-      const container = document.getElementById("toastContainer");
-      if (!container) return;
-      const toast = document.createElement("div");
-      toast.className = "px-4 py-2.5 rounded-xl bg-zinc-900/95 border border-emerald-500/40 text-xs font-semibold text-white shadow-2xl flex items-center gap-2";
-      toast.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span>${message}</span>`;
-      container.appendChild(toast);
-      setTimeout(() => {
-        toast.classList.add("opacity-0", "transition-opacity", "duration-300");
-        setTimeout(() => toast.remove(), 320);
-      }, 2400);
-    }
-
-    // =========================================================================
-    // 11. INITIALIZATION
-    // =========================================================================
-    applySharedUrlState();
-    renderCards();
-    renderSellLot();
-    renderRecentSalesPanel();
-    startRecentSalesRotation();
-  </script>
-</body>
-</html>
+// ... existing code ... -->
