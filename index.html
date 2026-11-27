@@ -1,0 +1,2675 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PokéVault 75% | Pokémon Card Valuation & Trade-In Terminal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            vault: {
+              bg: '#09090b',
+              card: '#121216',
+              cardHover: '#18181f',
+              border: '#27272a',
+              accent: '#10b981', // Emerald for 75% instant cash
+              purple: '#a855f7', // Ghost/Collector purple
+              amber: '#f59e0b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #09090b;
+      color: #f4f4f5;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* Subtle holographic shimmer for card previews */
+    .holo-foil {
+      background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.04) 0%,
+        rgba(168, 85, 247, 0.14) 25%,
+        rgba(16, 185, 129, 0.12) 50%,
+        rgba(59, 130, 246, 0.14) 75%,
+        rgba(255, 255, 255, 0.04) 100%
+      );
+      background-size: 200% 200%;
+      animation: shimmer 6s ease infinite;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #09090b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #27272a;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3f3f46;
+    }
+
+    /* Range slider styling */
+    input[type=range] {
+      -webkit-appearance: none;
+      background: transparent;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 18px;
+      width: 18px;
+      border-radius: 50%;
+      background: #10b981;
+      cursor: pointer;
+      margin-top: -6px;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+      border: 2px solid #ffffff;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 6px;
+      cursor: pointer;
+      background: #27272a;
+      border-radius: 999px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-emerald-500/30 selection:text-emerald-200">
+
+  <!-- Top Navigation Header -->
+  <header class="sticky top-0 z-40 bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800/80">
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      <!-- Brand Identity -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 via-indigo-600 to-emerald-500 p-[1.5px] shadow-lg shadow-purple-500/20">
+          <div class="w-full h-full bg-zinc-950 rounded-[10px] flex items-center justify-center">
+            <!-- Custom Pokeball / Ghost Radar SVG -->
+            <svg class="w-6 h-6 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="9" class="text-purple-400" />
+              <path d="M3 12h6m6 0h6" />
+              <circle cx="12" cy="12" r="3" class="text-emerald-400 fill-emerald-400/20" />
+            </svg>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg sm:text-xl font-extrabold tracking-tight text-white">
+              POKÉ<span class="text-purple-400">VAULT</span>
+            </h1>
+            <span class="px-2 py-0.5 text-[11px] font-mono font-bold uppercase tracking-wider rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+              75% BUYLIST LIVE
+            </span>
+          </div>
+          <p class="text-xs text-zinc-400 hidden sm:block">Multi-Source Index: TCGPlayer • eBay Last Sold • Collectr</p>
+        </div>
+      </div>
+
+      <!-- Global Payout Rate & Quick Add Custom Card -->
+      <div class="flex items-center gap-3 sm:gap-5">
+        <!-- Payout Percentage Control Pill -->
+        <div class="hidden md:flex items-center gap-3 bg-zinc-900/90 border border-zinc-800 px-3.5 py-2 rounded-xl">
+          <div class="flex flex-col">
+            <span class="text-[10px] uppercase tracking-wider text-zinc-400 font-semibold">Buyout Rate</span>
+            <span id="headerPayoutBadge" class="text-sm font-mono font-bold text-emerald-400">75% Cash</span>
+          </div>
+          <input
+            id="globalPayoutSlider"
+            type="range"
+            min="50"
+            max="90"
+            step="1"
+            value="75"
+            class="w-24 sm:w-28"
+            aria-label="Global Payout Percentage"
+          />
+          <button
+            id="reset75Btn"
+            title="Reset to standard 75% payout"
+            class="text-[11px] font-mono px-2 py-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition"
+          >
+            75%
+          </button>
+        </div>
+
+        <!-- Custom Card Modal Trigger -->
+        <button
+          onclick="openCustomCardModal()"
+          class="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 active:scale-[0.98] text-white text-xs sm:text-sm font-semibold shadow-lg shadow-purple-600/20 transition cursor-pointer"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Add Custom Card</span>
+        </button>
+
+        <!-- Share Link Modal Trigger -->
+        <button
+          type="button"
+          onclick="openShareModal()"
+          class="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-700/80 text-zinc-100 text-xs sm:text-sm font-semibold transition cursor-pointer"
+        >
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+          </svg>
+          <span class="hidden sm:inline">Share Link</span>
+        </button>
+
+        <!-- Mobile Lot Drawer Toggle -->
+        <button
+          onclick="toggleMobileLot()"
+          class="lg:hidden relative flex items-center gap-2 px-3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-bold text-xs shadow-lg shadow-emerald-500/20"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          <span id="mobileLotCountBadge">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <div class="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+    <!-- Left & Center Column: Search, Filters & Card Grid (8 cols on desktop) -->
+    <main class="lg:col-span-8 flex flex-col gap-5">
+
+      <!-- Search & Global Controls Bar -->
+      <div class="bg-zinc-900/70 border border-zinc-800/90 rounded-2xl p-4 shadow-xl relative z-30">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+          <!-- Search Input & Smart Similar Cards Autocomplete Popup -->
+          <div id="searchAutocompleteWrapper" class="md:col-span-6 relative">
+            <svg class="w-4 h-4 text-purple-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z" />
+            </svg>
+            <input
+              id="searchInput"
+              type="text"
+              autocomplete="off"
+              placeholder="Type Pokémon name (e.g. Gengar, Umbreon, Charizard, Pikachu)..."
+              class="w-full pl-10 pr-16 py-2.5 bg-zinc-950 border border-zinc-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-xl text-sm text-white placeholder-zinc-500 outline-none transition"
+            />
+            <div class="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+              <button
+                id="clearSearchBtn"
+                onclick="clearSearch()"
+                title="Clear search"
+                class="hidden px-1.5 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white text-xs transition cursor-pointer"
+              >
+                ✕
+              </button>
+              <span class="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono text-zinc-500 bg-zinc-900 border border-zinc-800 rounded">ESC</span>
+            </div>
+
+            <!-- Floating Smart Similar Cards & Evolution Line Popup -->
+            <div
+              id="similarCardsPopup"
+              class="hidden absolute left-0 right-0 sm:-right-32 lg:-right-48 top-[calc(100%+8px)] bg-zinc-950/98 backdrop-blur-xl border border-purple-500/45 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] overflow-hidden z-50"
+            >
+              <!-- Popup Header -->
+              <div class="px-4 py-2.5 bg-gradient-to-r from-purple-950/70 via-zinc-900 to-emerald-950/40 border-b border-zinc-800/90 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse shrink-0"></span>
+                  <span id="popupHeaderTitle" class="text-xs font-bold text-white truncate">Similar & Related Pokémon Matches</span>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <span id="popupMatchCount" class="text-[11px] font-mono text-purple-300 bg-purple-500/15 px-2 py-0.5 rounded-md border border-purple-500/30">0 found</span>
+                  <button onclick="closeSimilarPopup()" class="text-zinc-400 hover:text-white text-xs px-1.5 py-0.5 rounded hover:bg-zinc-800 cursor-pointer">✕</button>
+                </div>
+              </div>
+
+              <!-- Quick Pokémon Family Chips inside Popup -->
+              <div class="px-3.5 py-2 bg-zinc-900/60 border-b border-zinc-800/70 flex items-center gap-1.5 overflow-x-auto">
+                <span class="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 shrink-0">Quick Jump:</span>
+                <button type="button" onclick="triggerQuickPokemonSearch('Gengar')" class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-purple-500/15 text-purple-300 hover:bg-purple-500/30 border border-purple-500/30 shrink-0 cursor-pointer">Gengar Line</button>
+                <button type="button" onclick="triggerQuickPokemonSearch('Umbreon')" class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 shrink-0 cursor-pointer">Umbreon / Eevee</button>
+                <button type="button" onclick="triggerQuickPokemonSearch('Charizard')" class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 shrink-0 cursor-pointer">Charizard</button>
+                <button type="button" onclick="triggerQuickPokemonSearch('Pikachu')" class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 shrink-0 cursor-pointer">Pikachu</button>
+                <button type="button" onclick="triggerQuickPokemonSearch('Mew')" class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 shrink-0 cursor-pointer">Mew / Mewtwo</button>
+                <button type="button" onclick="triggerQuickPokemonSearch('Rayquaza')" class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 shrink-0 cursor-pointer">Rayquaza</button>
+              </div>
+
+              <!-- Scrollable Suggestions List -->
+              <div id="similarCardsPopupBody" class="max-h-[400px] overflow-y-auto divide-y divide-zinc-800/60">
+                <!-- Populated dynamically -->
+              </div>
+
+              <!-- Popup Footer -->
+              <div class="px-4 py-2 bg-zinc-900/90 border-t border-zinc-800 flex items-center justify-between text-[11px] text-zinc-400">
+                <span>Use <kbd class="px-1 py-0.2 bg-zinc-800 rounded text-zinc-300 font-mono">↑</kbd> <kbd class="px-1 py-0.2 bg-zinc-800 rounded text-zinc-300 font-mono">↓</kbd> to navigate, <kbd class="px-1 py-0.2 bg-zinc-800 rounded text-zinc-300 font-mono">Enter</kbd> to focus</span>
+                <button type="button" onclick="applyPopupToMainGrid()" class="text-purple-400 hover:text-purple-300 font-semibold cursor-pointer">Show All in Grid →</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Global Default Condition Selector -->
+          <div class="md:col-span-3">
+            <select
+              id="globalConditionSelect"
+              aria-label="Global Condition Filter"
+              class="w-full px-3 py-2.5 bg-zinc-950 border border-zinc-800 focus:border-purple-500 rounded-xl text-xs sm:text-sm text-zinc-200 outline-none cursor-pointer"
+            >
+              <option value="NM">Condition: Near Mint (100%)</option>
+              <option value="LP">Condition: Lightly Played (85%)</option>
+              <option value="MP">Condition: Mod. Played (70%)</option>
+              <option value="HP">Condition: Heavily Played (50%)</option>
+              <option value="DMG">Condition: Damaged (35%)</option>
+            </select>
+          </div>
+
+          <!-- Global Default Grade Selector -->
+          <div class="md:col-span-3">
+            <select
+              id="globalGradeSelect"
+              aria-label="Global Grade Filter"
+              class="w-full px-3 py-2.5 bg-zinc-950 border border-zinc-800 focus:border-purple-500 rounded-xl text-xs sm:text-sm text-zinc-200 outline-none cursor-pointer"
+            >
+              <option value="RAW">Grade: Raw / Ungraded</option>
+              <option value="PSA9">Slab: PSA 9 Mint</option>
+              <option value="BGS95">Slab: BGS 9.5 Gem Mint</option>
+              <option value="CGC10">Slab: CGC 10 Pristine</option>
+              <option value="PSA10">Slab: PSA 10 Gem Mint</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Mobile Payout Slider (visible on < md) -->
+        <div class="mt-3 pt-3 border-t border-zinc-800/80 flex md:hidden items-center justify-between gap-3">
+          <span class="text-xs text-zinc-400 font-medium">Instant Buyout %: <strong id="mobilePayoutLabel" class="text-emerald-400 font-mono">75%</strong></span>
+          <input
+            id="mobilePayoutSlider"
+            type="range"
+            min="50"
+            max="90"
+            step="1"
+            value="75"
+            class="w-36"
+          />
+        </div>
+
+        <!-- Era / Category Filter Pills & Sort -->
+        <div class="mt-3.5 pt-3 border-t border-zinc-800/70 flex flex-wrap items-center justify-between gap-3">
+          <div id="eraFilterContainer" class="flex flex-wrap items-center gap-1.5">
+            <button data-era="ALL" class="era-pill active px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 text-white transition">All Cards</button>
+            <button data-era="Gengar Line" class="era-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800 transition">👻 Gengar / Gastly Line</button>
+            <button data-era="Sword & Shield" class="era-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800 transition">Modern Alt Arts / SIRs</button>
+            <button data-era="WOTC Vintage" class="era-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800 transition">WOTC Vintage</button>
+            <button data-era="Sun & Moon / Promo" class="era-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800 transition">Sun & Moon / Promos</button>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-zinc-500">Sort:</span>
+            <select id="sortSelect" class="bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1 text-xs text-zinc-300 outline-none cursor-pointer">
+              <option value="value-desc">Highest Value</option>
+              <option value="value-asc">Lowest Value</option>
+              <option value="name-asc">Name (A-Z)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rotating Most Recent Sales Panel (TCGPlayer • eBay Last Sold • Collectr) -->
+      <section aria-label="Most Recent Sales" class="bg-zinc-900/75 border border-zinc-800/90 rounded-2xl p-4 shadow-xl">
+        <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-zinc-800/80">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <h2 class="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-white">Most Recent Sales</h2>
+            <span class="px-2 py-0.5 text-[10px] font-mono rounded-md bg-zinc-950 border border-zinc-800 text-zinc-400">
+              TCGPlayer • eBay • Collectr
+            </span>
+          </div>
+
+          <div class="flex items-center gap-1.5">
+            <button
+              type="button"
+              onclick="stepRecentSales(-1)"
+              title="Previous recent sale"
+              class="px-2 py-1 rounded-lg bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs font-mono transition cursor-pointer"
+            >
+              ‹
+            </button>
+            <button
+              id="toggleSalesRotationBtn"
+              type="button"
+              onclick="toggleRecentSalesRotation()"
+              title="Pause or resume rotation"
+              class="px-2.5 py-1 rounded-lg bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-[11px] font-mono transition cursor-pointer"
+            >
+              Pause
+            </button>
+            <button
+              type="button"
+              onclick="stepRecentSales(1)"
+              title="Next recent sale"
+              class="px-2 py-1 rounded-lg bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs font-mono transition cursor-pointer"
+            >
+              ›
+            </button>
+          </div>
+        </div>
+
+        <!-- Rotating Spotlight & Queue -->
+        <div id="recentSalesPanelBody" class="space-y-3">
+          <!-- Populated dynamically by renderRecentSalesPanel() -->
+        </div>
+
+        <!-- Rotation Progress Dots -->
+        <div id="recentSalesDots" class="mt-3 pt-2.5 border-t border-zinc-800/60 flex items-center justify-between gap-2">
+          <span id="recentSalesStatusText" class="text-[11px] font-mono text-zinc-500">Auto-rotating every 4s</span>
+          <div id="recentSalesDotButtons" class="flex items-center gap-1.5"></div>
+        </div>
+      </section>
+
+      <!-- Search-First Prompt State (Bottom card grid removed) -->
+      <div class="bg-zinc-900/40 border border-zinc-800/70 rounded-2xl p-8 sm:p-10 text-center space-y-3">
+        <div class="w-12 h-12 mx-auto rounded-2xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z" />
+          </svg>
+        </div>
+        <h2 class="text-base sm:text-lg font-extrabold text-white">Search Any Pokémon to View Comps & 75% Buyout</h2>
+        <p class="text-xs sm:text-sm text-zinc-400 max-w-lg mx-auto">
+          Start typing a Pokémon name above (like <span class="text-purple-300 font-semibold">Gengar</span>, <span class="text-purple-300 font-semibold">Umbreon</span>, <span class="text-purple-300 font-semibold">Charizard</span>, or <span class="text-purple-300 font-semibold">Pikachu</span>) to view live TCGPlayer, eBay Sold, and Collectr values in the popup and add cards straight to your 75% Sell Lot.
+        </p>
+        <div class="flex flex-wrap items-center justify-center gap-2 pt-2">
+          <button type="button" onclick="triggerQuickPokemonSearch('Gengar')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 transition cursor-pointer">Search Gengar</button>
+          <button type="button" onclick="triggerQuickPokemonSearch('Umbreon')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition cursor-pointer">Search Umbreon</button>
+          <button type="button" onclick="triggerQuickPokemonSearch('Charizard')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition cursor-pointer">Search Charizard</button>
+          <button type="button" onclick="triggerQuickPokemonSearch('Pikachu')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition cursor-pointer">Search Pikachu</button>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Right Column: Sticky 75% Sell Lot / Trade-In Calculator Sidebar (4 cols on desktop) -->
+    <aside id="sellLotSidebar" class="hidden lg:flex lg:col-span-4 flex-col sticky top-24 bg-zinc-900/90 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden max-h-[calc(100vh-7rem)]">
+      <!-- Sidebar Header -->
+      <div class="p-4 bg-gradient-to-r from-zinc-900 via-zinc-900 to-emerald-950/30 border-b border-zinc-800 flex items-center justify-between">
+        <div>
+          <div class="flex items-center gap-2">
+            <h2 class="text-base font-extrabold text-white tracking-tight">Instant Sell Lot</h2>
+            <span id="lotItemCountBadge" class="px-2 py-0.5 text-xs font-mono font-bold rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              0
+            </span>
+          </div>
+          <p class="text-xs text-zinc-400 mt-0.5">Calculated at <span id="sidebarRateText" class="text-emerald-400 font-mono font-semibold">75%</span> of Blended Market</p>
+        </div>
+        <button
+          id="clearLotBtn"
+          onclick="clearSellLot()"
+          class="text-xs text-zinc-400 hover:text-rose-400 transition px-2 py-1 rounded-lg hover:bg-zinc-800"
+        >
+          Clear All
+        </button>
+      </div>
+
+      <!-- Lot Items Scrollable List -->
+      <div id="sellLotItemsContainer" class="flex-1 overflow-y-auto p-4 space-y-2.5 min-h-[220px]">
+        <!-- Empty Lot Placeholder -->
+        <div id="emptyLotPlaceholder" class="h-full flex flex-col items-center justify-center text-center py-10 px-4">
+          <div class="w-12 h-12 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-center text-emerald-400 mb-3">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p class="text-sm font-semibold text-zinc-200">Your Sell Lot is Empty</p>
+          <p class="text-xs text-zinc-500 mt-1">Click <span class="text-emerald-400 font-semibold">"+ Add to 75% Sell Lot"</span> on any card to calculate an instant cash or trade-in buyout quote.</p>
+        </div>
+      </div>
+
+      <!-- Lot Totals & Checkout Footer -->
+      <div class="p-4 bg-zinc-950 border-t border-zinc-800 space-y-3">
+        <!-- Breakdown Rows -->
+        <div class="space-y-1.5 text-xs">
+          <div class="flex justify-between text-zinc-400">
+            <span>TCGPlayer Ref Total:</span>
+            <span id="lotTcgTotal" class="font-mono text-zinc-300">$0.00</span>
+          </div>
+          <div class="flex justify-between text-zinc-400">
+            <span>eBay Last Sold Ref Total:</span>
+            <span id="lotEbayTotal" class="font-mono text-zinc-300">$0.00</span>
+          </div>
+          <div class="flex justify-between text-zinc-400">
+            <span>Collectr Portfolio Total:</span>
+            <span id="lotCollectrTotal" class="font-mono text-zinc-300">$0.00</span>
+          </div>
+          <div class="pt-1.5 border-t border-zinc-800/80 flex justify-between text-sm font-semibold text-zinc-200">
+            <span>Blended Market Value:</span>
+            <span id="lotMarketTotal" class="font-mono text-white">$0.00</span>
+          </div>
+        </div>
+
+        <!-- Highlighted 75% Cash Payout Box -->
+        <div class="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between">
+          <div>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-400 block">Instant Cash Payout (<span id="payoutBoxPct">75%</span>)</span>
+            <span class="text-[11px] text-zinc-400">Same-day PayPal / Venmo / Cash</span>
+          </div>
+          <div id="lotCashPayout" class="text-2xl font-mono font-extrabold text-emerald-400">
+            $0.00
+          </div>
+        </div>
+
+        <!-- Fee & Shipping Advantage Note -->
+        <div id="feeAdvantageNote" class="hidden px-3 py-2 rounded-lg bg-zinc-900/90 border border-zinc-800/80 text-[11px] text-zinc-400 flex items-center justify-between">
+          <span>Saves ~13.25% marketplace fees + shipping:</span>
+          <span id="feeSavedAmount" class="font-mono font-semibold text-purple-300">$0.00</span>
+        </div>
+
+        <!-- Execute Offer Button -->
+        <button
+          id="executeOfferBtn"
+          onclick="openQuoteModal()"
+          disabled
+          class="w-full py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed text-zinc-950 font-extrabold text-sm shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-2 cursor-pointer"
+        >
+          <span>Execute 75% Sell Offer & Quote</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+        </button>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- Mobile Drawer Overlay for Sell Lot -->
+  <div id="mobileLotDrawer" class="fixed inset-0 z-50 hidden lg:hidden">
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="toggleMobileLot()"></div>
+    <div class="absolute right-0 top-0 bottom-0 w-full max-w-md bg-zinc-900 border-l border-zinc-800 flex flex-col">
+      <div class="p-4 border-b border-zinc-800 flex items-center justify-between">
+        <h3 class="text-base font-extrabold text-white">Instant Sell Lot (<span id="mobileDrawerCount">0</span>)</h3>
+        <button onclick="toggleMobileLot()" class="p-2 rounded-lg bg-zinc-800 text-zinc-300">✕</button>
+      </div>
+      <div id="mobileLotItemsContainer" class="flex-1 overflow-y-auto p-4 space-y-2.5"></div>
+      <div class="p-4 bg-zinc-950 border-t border-zinc-800 space-y-3">
+        <div class="flex justify-between text-sm text-zinc-300">
+          <span>Blended Market:</span>
+          <span id="mobileLotMarket" class="font-mono font-bold">$0.00</span>
+        </div>
+        <div class="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex justify-between items-center">
+          <span class="text-xs font-bold text-emerald-400 uppercase">Cash Offer (<span id="mobileDrawerPct">75%</span>)</span>
+          <span id="mobileLotPayout" class="text-xl font-mono font-extrabold text-emerald-400">$0.00</span>
+        </div>
+        <button
+          onclick="toggleMobileLot(); openQuoteModal();"
+          class="w-full py-3 rounded-xl bg-emerald-500 text-zinc-950 font-extrabold text-sm"
+        >
+          Generate Sell Offer Receipt
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Card Entry Modal -->
+  <div id="customCardModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeCustomCardModal()"></div>
+    <div class="relative w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden">
+      <div class="p-5 border-b border-zinc-800 flex items-center justify-between">
+        <div>
+          <h3 class="text-lg font-extrabold text-white">Add Custom Pokémon Card</h3>
+          <p class="text-xs text-zinc-400">Enter market comps from TCGPlayer, eBay Sold, or Collectr</p>
+        </div>
+        <button onclick="closeCustomCardModal()" class="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center">✕</button>
+      </div>
+
+      <form id="customCardForm" onsubmit="handleCustomCardSubmit(event)" class="p-5 space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-zinc-300 mb-1">Card Name *</label>
+            <input id="customName" type="text" required placeholder="e.g. Gengar ex Full Art" class="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 focus:border-purple-500 rounded-xl text-sm text-white outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-zinc-300 mb-1">Set Name *</label>
+            <input id="customSet" type="text" required placeholder="e.g. Temporal Forces" class="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 focus:border-purple-500 rounded-xl text-sm text-white outline-none" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-zinc-300 mb-1">Card Number</label>
+            <input id="customNumber" type="text" placeholder="e.g. 193/162" class="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 focus:border-purple-500 rounded-xl text-sm text-white outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-zinc-300 mb-1">Rarity</label>
+            <select id="customRarity" class="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white outline-none">
+              <option value="Special Illustration Rare">Special Illustration Rare</option>
+              <option value="Alternate Art VMAX">Alternate Art VMAX</option>
+              <option value="Holo Rare">Holo Rare</option>
+              <option value="Ultra Rare">Ultra Rare</option>
+              <option value="Secret Rare">Secret Rare</option>
+              <option value="Black Star Promo">Black Star Promo</option>
+            </select>
+          </div>
+          <div class="col-span-2 sm:col-span-1">
+            <label class="block text-xs font-semibold text-zinc-300 mb-1">Type Theme</label>
+            <select id="customType" class="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white outline-none">
+              <option value="Psychic">Psychic / Ghost</option>
+              <option value="Fire">Fire</option>
+              <option value="Water">Water</option>
+              <option value="Lightning">Lightning</option>
+              <option value="Grass">Grass</option>
+              <option value="Darkness">Darkness</option>
+              <option value="Dragon">Dragon</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-zinc-300">Near Mint Raw Market Prices (USD)</span>
+            <span class="text-[11px] text-zinc-500">Leave eBay/Collectr blank to auto-estimate</span>
+          </div>
+          <div class="grid grid-cols-3 gap-2.5">
+            <div>
+              <label class="block text-[11px] text-blue-400 font-semibold mb-1">TCGPlayer *</label>
+              <input id="customTcgPrice" type="number" step="0.01" min="0.01" required placeholder="45.00" class="w-full px-2.5 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm font-mono text-white outline-none" />
+            </div>
+            <div>
+              <label class="block text-[11px] text-amber-400 font-semibold mb-1">eBay Sold</label>
+              <input id="customEbayPrice" type="number" step="0.01" min="0.01" placeholder="Auto" class="w-full px-2.5 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm font-mono text-white outline-none" />
+            </div>
+            <div>
+              <label class="block text-[11px] text-purple-400 font-semibold mb-1">Collectr</label>
+              <input id="customCollectrPrice" type="number" step="0.01" min="0.01" placeholder="Auto" class="w-full px-2.5 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm font-mono text-white outline-none" />
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2.5 pt-2">
+          <button type="button" onclick="closeCustomCardModal()" class="px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-300">Cancel</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-extrabold shadow-lg shadow-emerald-500/20">Add Card to Catalog & Value</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Execute Sell Offer / Quote Receipt Modal -->
+  <div id="quoteModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/85 backdrop-blur-sm" onclick="closeQuoteModal()"></div>
+    <div class="relative w-full max-w-xl bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="p-5 bg-gradient-to-r from-emerald-950/50 via-zinc-900 to-purple-950/40 border-b border-zinc-800 flex items-center justify-between">
+        <div>
+          <span class="px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">OFFICIAL BUYLIST QUOTE</span>
+          <h3 class="text-lg font-extrabold text-white mt-1">PokéVault Instant Trade-In Summary</h3>
+        </div>
+        <button onclick="closeQuoteModal()" class="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center">✕</button>
+      </div>
+
+      <div class="p-5 overflow-y-auto space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-400 bg-zinc-950 p-3 rounded-xl border border-zinc-800">
+          <div>Quote ID: <span id="quoteIdDisplay" class="font-mono text-white font-bold">PV-84920</span></div>
+          <div>Payout Tier: <span id="quoteTierDisplay" class="font-mono text-emerald-400 font-bold">75% Instant Cash</span></div>
+          <div>Date: <span id="quoteDateDisplay" class="font-mono text-zinc-300"></span></div>
+        </div>
+
+        <!-- Itemized Receipt Table -->
+        <div class="border border-zinc-800 rounded-xl overflow-hidden">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-zinc-950 text-zinc-400 border-b border-zinc-800">
+                <th class="py-2.5 px-3 font-semibold">Card / Condition / Grade</th>
+                <th class="py-2.5 px-3 font-semibold text-right">Market</th>
+                <th class="py-2.5 px-3 font-semibold text-right text-emerald-400">Payout</th>
+              </tr>
+            </thead>
+            <tbody id="quoteTableBody" class="divide-y divide-zinc-800/70 bg-zinc-900/50">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Summary Totals -->
+        <div class="p-4 rounded-xl bg-zinc-950 border border-zinc-800 space-y-2">
+          <div class="flex justify-between text-xs text-zinc-400">
+            <span>Total Blended Market Value (TCG + eBay + Collectr):</span>
+            <span id="quoteMarketTotal" class="font-mono font-semibold text-white">$0.00</span>
+          </div>
+          <div class="flex justify-between items-center pt-2 border-t border-zinc-800">
+            <span class="text-sm font-bold text-white">Net Instant Cash Payout (<span id="quotePctLabel">75%</span>):</span>
+            <span id="quoteCashTotal" class="text-2xl font-mono font-extrabold text-emerald-400">$0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 bg-zinc-950 border-t border-zinc-800 flex flex-wrap items-center justify-between gap-3">
+        <button
+          onclick="copyQuoteReceipt()"
+          class="flex-1 py-2.5 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-semibold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
+        >
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+          </svg>
+          <span>Copy Formatted Quote Receipt</span>
+        </button>
+        <button
+          onclick="confirmSaleSubmission()"
+          class="flex-1 py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-extrabold text-xs shadow-lg shadow-emerald-500/20 transition cursor-pointer"
+        >
+          Lock In 75% Sell Offer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Banner (Replaces alert()) -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Share Link Modal for Friends & Family -->
+  <div id="shareLinkModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/85 backdrop-blur-sm" onclick="closeShareModal()"></div>
+    <div class="relative w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden">
+      <div class="p-5 bg-gradient-to-r from-purple-950/50 via-zinc-900 to-emerald-950/40 border-b border-zinc-800 flex items-center justify-between">
+        <div>
+          <span class="px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">FRIENDS & FAMILY SHARE</span>
+          <h3 class="text-lg font-extrabold text-white mt-1">Share PokéVault 75% Link</h3>
+        </div>
+        <button type="button" onclick="closeShareModal()" class="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center cursor-pointer">✕</button>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <p class="text-xs text-zinc-400 leading-relaxed">
+          Copy the link below to share this valuation &amp; instant buyout calculator with friends and family. It preserves your current <span class="text-emerald-400 font-mono font-semibold" id="shareModalRateLabel">75%</span> payout tier, condition/grade filters, and active sell lot items.
+        </p>
+
+        <div id="sharePreviewNotice" class="hidden p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200 leading-relaxed">
+          Note: Because this app is currently running inside a temporary preview frame (<span id="shareOriginType" class="font-mono">preview</span>), the URL may be temporary or local to your browser session. To send a permanent public link to friends and family, publish/host this <span class="font-mono">index.html</span> file on a static host (like GitHub Pages, Netlify, or Vercel).
+        </div>
+
+        <div class="space-y-1.5">
+          <label for="shareUrlInput" class="block text-xs font-semibold text-zinc-300">Shareable Link</label>
+          <div class="flex items-center gap-2">
+            <input
+              id="shareUrlInput"
+              type="text"
+              readonly
+              onclick="this.select()"
+              class="flex-1 px-3 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-mono text-zinc-200 outline-none select-all"
+            />
+            <button
+              type="button"
+              onclick="copyShareLink()"
+              class="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-extrabold text-xs shadow-lg shadow-emerald-500/20 transition shrink-0 cursor-pointer"
+            >
+              Copy Link
+            </button>
+          </div>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-between gap-3 text-xs">
+          <div>
+            <div class="font-semibold text-zinc-200">Included in Link</div>
+            <div class="text-[11px] text-zinc-400 mt-0.5" id="shareSummaryDetails">75% Buyout • NM / Raw • 0 items in Sell Lot</div>
+          </div>
+          <button
+            type="button"
+            onclick="copyQuoteReceipt()"
+            class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-semibold text-[11px] shrink-0 cursor-pointer"
+          >
+            Copy Text Quote
+          </button>
+        </div>
+      </div>
+
+      <div class="p-4 bg-zinc-950 border-t border-zinc-800 flex justify-end">
+        <button
+          type="button"
+          onclick="closeShareModal()"
+          class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-300 cursor-pointer"
+        >
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. MULTI-SOURCE POKEMON CARD DATABASE (2026 Market Benchmarks)
+    // =========================================================================
+    const INITIAL_CARDS = [
+      {
+        id: "gengar-vmax-alt",
+        name: "Gengar VMAX (Alternate Art)",
+        pokemon: "Gengar",
+        family: "gengar-line",
+        set: "Sword & Shield: Fusion Strike",
+        number: "271/264",
+        era: "Gengar Line",
+        secondaryEra: "Sword & Shield",
+        rarity: "Alternate Art VMAX",
+        type: "Psychic",
+        artStyle: "gengar",
+        tcgPrice: 985.00,
+        ebayPrice: 1005.00,
+        collectrPrice: 990.00
+      },
+      {
+        id: "gengar-mimikyu-gx-alt",
+        name: "Gengar & Mimikyu GX (Alt Art)",
+        pokemon: "Gengar",
+        family: "gengar-line",
+        set: "Sun & Moon: Team Up",
+        number: "165/181",
+        era: "Gengar Line",
+        secondaryEra: "Sun & Moon / Promo",
+        rarity: "Alternate Full Art",
+        type: "Psychic",
+        artStyle: "gengar",
+        tcgPrice: 2420.00,
+        ebayPrice: 2475.00,
+        collectrPrice: 2440.00
+      },
+      {
+        id: "mega-gengar-ex-sir",
+        name: "Mega Gengar ex (Special Illustration Rare)",
+        pokemon: "Gengar",
+        family: "gengar-line",
+        set: "Mega Evolution: Phantasmal Flames",
+        number: "284/217",
+        era: "Gengar Line",
+        secondaryEra: "Sword & Shield",
+        rarity: "Special Illustration Rare",
+        type: "Psychic",
+        artStyle: "gengar",
+        tcgPrice: 535.00,
+        ebayPrice: 552.00,
+        collectrPrice: 540.00
+      },
+      {
+        id: "sabrinas-gengar-14",
+        name: "Sabrina's Gengar (Holo)",
+        pokemon: "Gengar",
+        family: "gengar-line",
+        set: "Gym Heroes (2000)",
+        number: "14/132",
+        era: "Gengar Line",
+        secondaryEra: "WOTC Vintage",
+        rarity: "Holo Rare",
+        type: "Psychic",
+        artStyle: "gengar",
+        tcgPrice: 290.00,
+        ebayPrice: 305.00,
+        collectrPrice: 295.00
+      },
+      {
+        id: "fossil-gengar-5",
+        name: "Gengar (Fossil Holo)",
+        pokemon: "Gengar",
+        family: "gengar-line",
+        set: "Fossil (1999)",
+        number: "5/62",
+        era: "Gengar Line",
+        secondaryEra: "WOTC Vintage",
+        rarity: "Holo Rare",
+        type: "Psychic",
+        artStyle: "gengar",
+        tcgPrice: 98.00,
+        ebayPrice: 104.00,
+        collectrPrice: 100.00
+      },
+      {
+        id: "dark-gengar-neo",
+        name: "Dark Gengar (Holo)",
+        pokemon: "Gengar",
+        family: "gengar-line",
+        set: "Neo Destiny (2002)",
+        number: "6/105",
+        era: "Gengar Line",
+        secondaryEra: "WOTC Vintage",
+        rarity: "Holo Rare",
+        type: "Psychic",
+        artStyle: "gengar",
+        tcgPrice: 245.00,
+        ebayPrice: 260.00,
+        collectrPrice: 252.00
+      },
+      {
+        id: "gengar-ex-154",
+        name: "Gengar ex (Ultra Rare Full Art)",
+        pokemon: "Gengar",
+        family: "gengar-line",
+        set: "Scarlet & Violet: Temporal Forces",
+        number: "193/162",
+        era: "Gengar Line",
+        secondaryEra: "Sword & Shield",
+        rarity: "Ultra Rare",
+        type: "Darkness",
+        artStyle: "gengar",
+        tcgPrice: 44.00,
+        ebayPrice: 47.50,
+        collectrPrice: 45.50
+      },
+      {
+        id: "haunter-fossil-holo",
+        name: "Haunter (Fossil Holo)",
+        pokemon: "Haunter",
+        family: "gengar-line",
+        set: "Fossil (1999)",
+        number: "6/62",
+        era: "Gengar Line",
+        secondaryEra: "WOTC Vintage",
+        rarity: "Holo Rare",
+        type: "Psychic",
+        artStyle: "haunter",
+        tcgPrice: 25.50,
+        ebayPrice: 28.00,
+        collectrPrice: 26.50
+      },
+      {
+        id: "sabrinas-haunter-55",
+        name: "Sabrina's Haunter (Uncommon)",
+        pokemon: "Haunter",
+        family: "gengar-line",
+        set: "Gym Heroes (2000)",
+        number: "55/132",
+        era: "Gengar Line",
+        secondaryEra: "WOTC Vintage",
+        rarity: "Uncommon",
+        type: "Psychic",
+        artStyle: "haunter",
+        tcgPrice: 12.50,
+        ebayPrice: 14.00,
+        collectrPrice: 13.00
+      },
+      {
+        id: "gastly-temporal-ir",
+        name: "Gastly (Illustration Rare)",
+        pokemon: "Gastly",
+        family: "gengar-line",
+        set: "Scarlet & Violet: Temporal Forces",
+        number: "177/162",
+        era: "Gengar Line",
+        secondaryEra: "Sword & Shield",
+        rarity: "Illustration Rare",
+        type: "Darkness",
+        artStyle: "gastly",
+        tcgPrice: 37.50,
+        ebayPrice: 40.00,
+        collectrPrice: 38.50
+      },
+      {
+        id: "umbreon-vmax-alt",
+        name: "Umbreon VMAX (Alt Art / Moonbreon)",
+        pokemon: "Umbreon",
+        family: "eevee-line",
+        set: "Sword & Shield: Evolving Skies",
+        number: "215/203",
+        era: "Sword & Shield",
+        rarity: "Alternate Art VMAX",
+        type: "Darkness",
+        artStyle: "moon",
+        tcgPrice: 2220.00,
+        ebayPrice: 2265.00,
+        collectrPrice: 2240.00
+      },
+      {
+        id: "umbreon-ex-prismatic-sir",
+        name: "Umbreon ex (Special Illustration Rare)",
+        pokemon: "Umbreon",
+        family: "eevee-line",
+        set: "Scarlet & Violet: Prismatic Evolutions",
+        number: "161/131",
+        era: "Sword & Shield",
+        rarity: "Special Illustration Rare",
+        type: "Darkness",
+        artStyle: "moon",
+        tcgPrice: 1380.00,
+        ebayPrice: 1425.00,
+        collectrPrice: 1400.00
+      },
+      {
+        id: "espeon-vmax-alt",
+        name: "Espeon VMAX (Alternate Art)",
+        pokemon: "Espeon",
+        family: "eevee-line",
+        set: "Sword & Shield: Fusion Strike",
+        number: "270/264",
+        era: "Sword & Shield",
+        rarity: "Alternate Art VMAX",
+        type: "Psychic",
+        artStyle: "psychic",
+        tcgPrice: 295.00,
+        ebayPrice: 308.00,
+        collectrPrice: 300.00
+      },
+      {
+        id: "sylveon-vmax-alt",
+        name: "Sylveon VMAX (Alternate Art)",
+        pokemon: "Sylveon",
+        family: "eevee-line",
+        set: "Sword & Shield: Evolving Skies",
+        number: "212/203",
+        era: "Sword & Shield",
+        rarity: "Alternate Art VMAX",
+        type: "Psychic",
+        artStyle: "psychic",
+        tcgPrice: 340.00,
+        ebayPrice: 355.00,
+        collectrPrice: 346.00
+      },
+      {
+        id: "eevee-twilight-ir",
+        name: "Eevee (Illustration Rare)",
+        pokemon: "Eevee",
+        family: "eevee-line",
+        set: "Scarlet & Violet: Twilight Masquerade",
+        number: "188/167",
+        era: "Sword & Shield",
+        rarity: "Illustration Rare",
+        type: "Colorless",
+        artStyle: "crest",
+        tcgPrice: 78.00,
+        ebayPrice: 82.50,
+        collectrPrice: 80.00
+      },
+      {
+        id: "base-charizard-4",
+        name: "Charizard (Base Set Unlimited Holo)",
+        pokemon: "Charizard",
+        family: "charizard-line",
+        set: "Base Set (1999)",
+        number: "4/102",
+        era: "WOTC Vintage",
+        rarity: "Holo Rare",
+        type: "Fire",
+        artStyle: "flame",
+        tcgPrice: 415.00,
+        ebayPrice: 430.00,
+        collectrPrice: 420.00
+      },
+      {
+        id: "mega-charizard-x-ex-125",
+        name: "Mega Charizard X ex (Special Illustration Rare)",
+        pokemon: "Charizard",
+        family: "charizard-line",
+        set: "Mega Evolution: Inferno X",
+        number: "125/094",
+        era: "Sword & Shield",
+        rarity: "Special Illustration Rare",
+        type: "Fire",
+        artStyle: "flame",
+        tcgPrice: 680.00,
+        ebayPrice: 705.00,
+        collectrPrice: 690.00
+      },
+      {
+        id: "charizard-ex-151-sir",
+        name: "Charizard ex (151 Special Illustration Rare)",
+        pokemon: "Charizard",
+        family: "charizard-line",
+        set: "Scarlet & Violet: 151",
+        number: "199/165",
+        era: "Sword & Shield",
+        rarity: "Special Illustration Rare",
+        type: "Fire",
+        artStyle: "flame",
+        tcgPrice: 235.00,
+        ebayPrice: 245.00,
+        collectrPrice: 240.00
+      },
+      {
+        id: "charmander-obsidian-ir",
+        name: "Charmander (Illustration Rare Promo)",
+        pokemon: "Charmander",
+        family: "charizard-line",
+        set: "SVP Black Star Promos",
+        number: "044",
+        era: "Sun & Moon / Promo",
+        rarity: "Black Star Promo",
+        type: "Fire",
+        artStyle: "flame",
+        tcgPrice: 46.00,
+        ebayPrice: 49.00,
+        collectrPrice: 47.50
+      },
+      {
+        id: "pikachu-ex-surging-sir",
+        name: "Pikachu ex (Special Illustration Rare)",
+        pokemon: "Pikachu",
+        family: "pikachu-line",
+        set: "Scarlet & Violet: Surging Sparks",
+        number: "238/191",
+        era: "Sword & Shield",
+        rarity: "Special Illustration Rare",
+        type: "Lightning",
+        artStyle: "bolt",
+        tcgPrice: 510.00,
+        ebayPrice: 530.00,
+        collectrPrice: 520.00
+      },
+      {
+        id: "pikachu-grey-felt-hat",
+        name: "Pikachu with Grey Felt Hat",
+        pokemon: "Pikachu",
+        family: "pikachu-line",
+        set: "SVP Black Star Promos (Van Gogh)",
+        number: "085",
+        era: "Sun & Moon / Promo",
+        rarity: "Black Star Promo",
+        type: "Lightning",
+        artStyle: "bolt",
+        tcgPrice: 295.00,
+        ebayPrice: 310.00,
+        collectrPrice: 302.00
+      },
+      {
+        id: "raichu-paldea-ir",
+        name: "Raichu (Illustration Rare)",
+        pokemon: "Raichu",
+        family: "pikachu-line",
+        set: "Scarlet & Violet: Paldea Evolved",
+        number: "211/193",
+        era: "Sword & Shield",
+        rarity: "Illustration Rare",
+        type: "Lightning",
+        artStyle: "bolt",
+        tcgPrice: 52.00,
+        ebayPrice: 55.00,
+        collectrPrice: 53.50
+      },
+      {
+        id: "rayquaza-vmax-alt",
+        name: "Rayquaza VMAX (Alternate Art)",
+        pokemon: "Rayquaza",
+        family: "rayquaza-line",
+        set: "Sword & Shield: Evolving Skies",
+        number: "218/203",
+        era: "Sword & Shield",
+        rarity: "Alternate Art VMAX",
+        type: "Dragon",
+        artStyle: "dragon",
+        tcgPrice: 675.00,
+        ebayPrice: 695.00,
+        collectrPrice: 685.00
+      },
+      {
+        id: "lugia-v-alt",
+        name: "Lugia V (Alternate Full Art)",
+        pokemon: "Lugia",
+        family: "lugia-line",
+        set: "Sword & Shield: Silver Tempest",
+        number: "186/195",
+        era: "Sword & Shield",
+        rarity: "Alternate Full Art",
+        type: "Colorless",
+        artStyle: "storm",
+        tcgPrice: 255.00,
+        ebayPrice: 268.00,
+        collectrPrice: 260.00
+      },
+      {
+        id: "giratina-v-alt",
+        name: "Giratina V (Alternate Full Art)",
+        pokemon: "Giratina",
+        family: "giratina-line",
+        set: "Sword & Shield: Lost Origin",
+        number: "186/196",
+        era: "Sword & Shield",
+        rarity: "Alternate Full Art",
+        type: "Dragon",
+        artStyle: "void",
+        tcgPrice: 560.00,
+        ebayPrice: 580.00,
+        collectrPrice: 570.00
+      },
+      {
+        id: "latias-latios-gx-alt",
+        name: "Latias & Latios GX (Lovebirds Alt Art)",
+        pokemon: "Latias",
+        family: "eon-duo",
+        set: "Sun & Moon: Team Up",
+        number: "170/181",
+        era: "Sun & Moon / Promo",
+        rarity: "Alternate Full Art",
+        type: "Dragon",
+        artStyle: "dragon",
+        tcgPrice: 1580.00,
+        ebayPrice: 1640.00,
+        collectrPrice: 1610.00
+      },
+      {
+        id: "mewtwo-gx-secret",
+        name: "Mewtwo GX (Mewtube Secret Rare)",
+        pokemon: "Mewtwo",
+        family: "mew-line",
+        set: "Sun & Moon: Shining Legends",
+        number: "78/73",
+        era: "Sun & Moon / Promo",
+        rarity: "Secret Rare",
+        type: "Psychic",
+        artStyle: "psychic",
+        tcgPrice: 275.00,
+        ebayPrice: 290.00,
+        collectrPrice: 282.00
+      },
+      {
+        id: "mew-ex-151-sir",
+        name: "Mew ex (Bubble Mew Special Illustration Rare)",
+        pokemon: "Mew",
+        family: "mew-line",
+        set: "Scarlet & Violet: Paldean Fates",
+        number: "232/091",
+        era: "Sword & Shield",
+        rarity: "Special Illustration Rare",
+        type: "Psychic",
+        artStyle: "psychic",
+        tcgPrice: 365.00,
+        ebayPrice: 380.00,
+        collectrPrice: 372.00
+      },
+      {
+        id: "dragonite-v-alt",
+        name: "Dragonite V (Alternate Full Art)",
+        pokemon: "Dragonite",
+        family: "dragonite-line",
+        set: "Sword & Shield: Evolving Skies",
+        number: "192/203",
+        era: "Sword & Shield",
+        rarity: "Alternate Full Art",
+        type: "Dragon",
+        artStyle: "dragon",
+        tcgPrice: 215.00,
+        ebayPrice: 225.00,
+        collectrPrice: 220.00
+      },
+      {
+        id: "base-blastoise-2",
+        name: "Blastoise (Base Set Unlimited Holo)",
+        pokemon: "Blastoise",
+        family: "blastoise-line",
+        set: "Base Set (1999)",
+        number: "2/102",
+        era: "WOTC Vintage",
+        rarity: "Holo Rare",
+        type: "Water",
+        artStyle: "wave",
+        tcgPrice: 148.00,
+        ebayPrice: 156.00,
+        collectrPrice: 152.00
+      },
+      {
+        id: "base-venusaur-15",
+        name: "Venusaur (Base Set Unlimited Holo)",
+        pokemon: "Venusaur",
+        family: "venusaur-line",
+        set: "Base Set (1999)",
+        number: "15/102",
+        era: "WOTC Vintage",
+        rarity: "Holo Rare",
+        type: "Grass",
+        artStyle: "leaf",
+        tcgPrice: 118.00,
+        ebayPrice: 125.00,
+        collectrPrice: 121.00
+      }
+    ];
+
+    // Evolution & Related Pokémon Family Mapping for Smart Suggestions
+    const EVOLUTION_FAMILIES = {
+      "gengar-line": ["gengar", "haunter", "gastly", "sabrina", "mimikyu", "ghost"],
+      "eevee-line": ["eevee", "umbreon", "espeon", "sylveon", "vaporeon", "jolteon", "flareon", "leafeon", "glaceon", "moonbreon"],
+      "charizard-line": ["charizard", "charmeleon", "charmander"],
+      "pikachu-line": ["pikachu", "raichu", "pichu", "van gogh"],
+      "mew-line": ["mew", "mewtwo", "mewtube", "bubble mew"],
+      "dragonite-line": ["dragonite", "dragonair", "dratini"],
+      "blastoise-line": ["blastoise", "wartortle", "squirtle"],
+      "venusaur-line": ["venusaur", "ivysaur", "bulbasaur"],
+      "rayquaza-line": ["rayquaza"],
+      "lugia-line": ["lugia"],
+      "giratina-line": ["giratina"],
+      "eon-duo": ["latias", "latios", "lovebirds"]
+    };
+
+    // Condition & Grading Multipliers
+    const CONDITION_MULTIPLIERS = {
+      NM: { label: "Near Mint", factor: 1.00 },
+      LP: { label: "Lightly Played", factor: 0.85 },
+      MP: { label: "Moderately Played", factor: 0.70 },
+      HP: { label: "Heavily Played", factor: 0.50 },
+      DMG: { label: "Damaged", factor: 0.35 }
+    };
+
+    const GRADE_MULTIPLIERS = {
+      RAW: { label: "Raw", factor: 1.00, badge: "RAW" },
+      PSA9: { label: "PSA 9 Mint", factor: 1.35, badge: "PSA 9" },
+      BGS95: { label: "BGS 9.5 Gem", factor: 1.75, badge: "BGS 9.5" },
+      CGC10: { label: "CGC 10 Pristine", factor: 2.15, badge: "CGC 10" },
+      PSA10: { label: "PSA 10 Gem Mint", factor: 2.45, badge: "PSA 10" }
+    };
+
+    const RECENT_SALES_FEED = [
+      {
+        id: "sale-1",
+        cardId: "gengar-vmax-alt",
+        name: "Gengar VMAX (Alternate Art)",
+        set: "Fusion Strike #271/264",
+        source: "eBay Last Sold",
+        sourceColor: "text-amber-400 bg-amber-500/10 border-amber-500/30",
+        conditionOrGrade: "NM Raw",
+        soldPrice: 1005.00,
+        timeAgo: "4m ago"
+      },
+      {
+        id: "sale-2",
+        cardId: "umbreon-vmax-alt",
+        name: "Umbreon VMAX (Alt Art / Moonbreon)",
+        set: "Evolving Skies #215/203",
+        source: "TCGPlayer Market",
+        sourceColor: "text-blue-400 bg-blue-500/10 border-blue-500/30",
+        conditionOrGrade: "NM Raw",
+        soldPrice: 2220.00,
+        timeAgo: "11m ago"
+      },
+      {
+        id: "sale-3",
+        cardId: "gengar-mimikyu-gx-alt",
+        name: "Gengar & Mimikyu GX (Alt Art)",
+        set: "Team Up #165/181",
+        source: "Collectr Comp",
+        sourceColor: "text-purple-400 bg-purple-500/10 border-purple-500/30",
+        conditionOrGrade: "NM Raw",
+        soldPrice: 2440.00,
+        timeAgo: "19m ago"
+      },
+      {
+        id: "sale-4",
+        cardId: "pikachu-grey-felt-hat",
+        name: "Pikachu with Grey Felt Hat",
+        set: "SVP Promo #085",
+        source: "eBay Last Sold",
+        sourceColor: "text-amber-400 bg-amber-500/10 border-amber-500/30",
+        conditionOrGrade: "NM Raw",
+        soldPrice: 310.00,
+        timeAgo: "27m ago"
+      },
+      {
+        id: "sale-5",
+        cardId: "haunter-fossil-holo",
+        name: "Haunter (Fossil Holo)",
+        set: "Fossil #6/62",
+        source: "TCGPlayer Market",
+        sourceColor: "text-blue-400 bg-blue-500/10 border-blue-500/30",
+        conditionOrGrade: "LP Raw",
+        soldPrice: 25.50,
+        timeAgo: "34m ago"
+      },
+      {
+        id: "sale-6",
+        cardId: "gastly-temporal-ir",
+        name: "Gastly (Illustration Rare)",
+        set: "Temporal Forces #177/162",
+        source: "Collectr Comp",
+        sourceColor: "text-purple-400 bg-purple-500/10 border-purple-500/30",
+        conditionOrGrade: "NM Raw",
+        soldPrice: 38.50,
+        timeAgo: "42m ago"
+      }
+    ];
+
+    // =========================================================================
+    // 2. APPLICATION STATE
+    // =========================================================================
+    let cards = [...INITIAL_CARDS];
+    let cardOverrides = {}; // Per-card condition/grade overrides: { [cardId]: { condition, grade } }
+    let sellLot = []; // Array of { lotItemId, cardId, name, set, number, condition, grade, tcg, ebay, collectr, blendedMarket, qty }
+    let payoutRate = 75; // Default 75% payout
+    let activeEra = "ALL";
+    let searchQuery = "";
+    let globalCondition = "NM";
+    let globalGrade = "RAW";
+    let sortBy = "value-desc";
+    let popupFocusedIndex = -1;
+    let currentPopupItems = [];
+    let recentSaleIndex = 0;
+    let isRecentSalesRotating = true;
+    let recentSalesTimer = null;
+
+    // =========================================================================
+    // 3. VALUATION ENGINE & FUZZY MATCHING HELPERS
+    // =========================================================================
+    function getCardEffectiveSettings(cardId) {
+      const override = cardOverrides[cardId] || {};
+      return {
+        condition: override.condition || globalCondition,
+        grade: override.grade || globalGrade
+      };
+    }
+
+    function calculateCardValuation(card) {
+      const { condition, grade } = getCardEffectiveSettings(card.id);
+      // If graded slab is selected, condition multiplier is anchored to Mint baseline (1.0)
+      const condMult = grade === "RAW" ? CONDITION_MULTIPLIERS[condition].factor : 1.0;
+      const gradeMult = GRADE_MULTIPLIERS[grade].factor;
+      const combinedMult = condMult * gradeMult;
+
+      const tcg = card.tcgPrice * combinedMult;
+      const ebay = card.ebayPrice * combinedMult;
+      const collectr = card.collectrPrice * combinedMult;
+      const blendedMarket = (tcg + ebay + collectr) / 3;
+      const instantOffer = blendedMarket * (payoutRate / 100);
+
+      return {
+        condition,
+        grade,
+        tcg,
+        ebay,
+        collectr,
+        blendedMarket,
+        instantOffer
+      };
+    }
+
+    function formatCurrency(val) {
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(val);
+    }
+
+    // Levenshtein edit distance for typo-tolerant Pokémon name searches (e.g., "genger", "umbron")
+    function levenshteinDistance(a, b) {
+      if (a.length === 0) return b.length;
+      if (b.length === 0) return a.length;
+      const matrix = Array.from({ length: b.length + 1 }, (_, i) => [i]);
+      for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+      for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+          const cost = b[i - 1] === a[j - 1] ? 0 : 1;
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j] + 1,
+            matrix[i][j - 1] + 1,
+            matrix[i - 1][j - 1] + cost
+          );
+        }
+      }
+      return matrix[b.length][a.length];
+    }
+
+    // Find Direct Matches + Evolution Line / Related Pokémon + Fuzzy Matches
+    function findSimilarAndRelatedCards(rawQuery) {
+      const q = rawQuery.trim().toLowerCase();
+      if (!q) return { direct: [], related: [], matchedFamilies: [] };
+
+      // 1. Identify any evolution families triggered by the query (including fuzzy typos)
+      const matchedFamilies = new Set();
+      Object.entries(EVOLUTION_FAMILIES).forEach(([familyKey, keywords]) => {
+        for (const kw of keywords) {
+          if (kw.includes(q) || q.includes(kw)) {
+            matchedFamilies.add(familyKey);
+            break;
+          }
+          if (q.length >= 4 && Math.abs(kw.length - q.length) <= 2) {
+            if (levenshteinDistance(q, kw) <= 2) {
+              matchedFamilies.add(familyKey);
+              break;
+            }
+          }
+        }
+      });
+
+      const direct = [];
+      const related = [];
+
+      cards.forEach(card => {
+        const nameLower = card.name.toLowerCase();
+        const pokeLower = (card.pokemon || "").toLowerCase();
+        const setLower = card.set.toLowerCase();
+        const numLower = card.number.toLowerCase();
+
+        const isDirectSubstring =
+          nameLower.includes(q) ||
+          pokeLower.includes(q) ||
+          setLower.includes(q) ||
+          numLower.includes(q);
+
+        const isFuzzySpeciesMatch =
+          q.length >= 4 &&
+          pokeLower &&
+          Math.abs(pokeLower.length - q.length) <= 2 &&
+          levenshteinDistance(q, pokeLower) <= 2;
+
+        if (isDirectSubstring || isFuzzySpeciesMatch) {
+          direct.push(card);
+        } else if (card.family && matchedFamilies.has(card.family)) {
+          related.push(card);
+        }
+      });
+
+      // Sort both buckets by Blended Market Value descending
+      direct.sort((a, b) => calculateCardValuation(b).blendedMarket - calculateCardValuation(a).blendedMarket);
+      related.sort((a, b) => calculateCardValuation(b).blendedMarket - calculateCardValuation(a).blendedMarket);
+
+      return {
+        direct,
+        related,
+        matchedFamilies: Array.from(matchedFamilies)
+      };
+    }
+
+    // =========================================================================
+    // 3B. SMART SIMILAR CARDS AUTOCOMPLETE POPUP RENDERER & INTERACTIONS
+    // =========================================================================
+    function renderSimilarCardsPopup(rawQuery) {
+      const popup = document.getElementById("similarCardsPopup");
+      const body = document.getElementById("similarCardsPopupBody");
+      const headerTitle = document.getElementById("popupHeaderTitle");
+      const matchCount = document.getElementById("popupMatchCount");
+
+      const q = rawQuery.trim();
+      if (!q) {
+        closeSimilarPopup();
+        return;
+      }
+
+      const { direct, related } = findSimilarAndRelatedCards(q);
+      const combined = [...direct, ...related];
+      currentPopupItems = combined;
+      popupFocusedIndex = -1;
+
+      if (combined.length === 0) {
+        headerTitle.textContent = `No exact matches for "${q}"`;
+        matchCount.textContent = "0 found";
+        body.innerHTML = `
+          <div class="p-6 text-center space-y-2.5">
+            <p class="text-xs text-zinc-400">No cards in the local index matched <span class="text-white font-semibold">"${q}"</span>.</p>
+            <button
+              type="button"
+              onclick="closeSimilarPopup(); openCustomCardModal('${q.replace(/'/g, "\\'")}');"
+              class="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition cursor-pointer"
+            >
+              + Add "${q}" as Custom Card
+            </button>
+          </div>
+        `;
+        popup.classList.remove("hidden");
+        return;
+      }
+
+      headerTitle.textContent = `Similar & Evolution Line Matches for "${q}"`;
+      matchCount.textContent = `combined.lengthcard{combined.length === 1 ? "" : "s"}`;
+
+      let html = "";
+      let globalIdx = 0;
+
+      if (direct.length > 0) {
+        html += `
+          <div class="px-3.5 py-1.5 bg-zinc-900/90 text-[10px] font-bold uppercase tracking-wider text-purple-300 flex items-center justify-between">
+            <span>Direct Name & Species Matches (${direct.length})</span>
+            <span>TCG • eBay • Collectr Blended</span>
+          </div>
+        `;
+        direct.forEach(card => {
+          html += buildPopupRowHTML(card, globalIdx++, false);
+        });
+      }
+
+      if (related.length > 0) {
+        html += `
+          <div class="px-3.5 py-1.5 bg-purple-950/35 text-[10px] font-bold uppercase tracking-wider text-amber-300 flex items-center justify-between">
+            <span>✨ Evolution Line & Related Pokémon (${related.length})</span>
+            <span>Same Evolution Family</span>
+          </div>
+        `;
+        related.forEach(card => {
+          html += buildPopupRowHTML(card, globalIdx++, true);
+        });
+      }
+
+      body.innerHTML = html;
+      popup.classList.remove("hidden");
+    }
+
+    function buildPopupRowHTML(card, index, isRelated) {
+      const val = calculateCardValuation(card);
+      const badgeLabel = val.grade === "RAW" ? val.condition : GRADE_MULTIPLIERS[val.grade].badge;
+
+      return `
+        <div
+          data-popup-index="${index}"
+          data-card-id="${card.id}"
+          class="popup-suggestion-row px-3.5 py-2.5 hover:bg-zinc-900/95 transition flex items-center justify-between gap-3 cursor-pointer"
+          onclick="focusCardFromPopup('${card.id}')"
+        >
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs sm:text-sm font-bold text-white truncate">${card.name}</span>
+              ${isRelated ? `<span class="px-1.5 py-0.2 text-[9px] font-mono font-bold uppercase rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 shrink-0">Evo Line</span>` : ""}
+            </div>
+            <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-zinc-400 mt-0.5">
+              <span class="truncate">${card.set}</span>
+              <span class="font-mono text-zinc-300">#${card.number}</span>
+              <span class="px-1.5 py-0.2 rounded bg-zinc-900 border border-zinc-800 font-mono text-[10px] text-zinc-300">${badgeLabel}</span>
+            </div>
+            <div class="flex items-center gap-2.5 mt-1 text-[10px] font-mono text-zinc-500">
+              <span class="text-blue-400/90">TCG ${formatCurrency(val.tcg)}</span>
+              <span>•</span>
+              <span class="text-amber-400/90">eBay ${formatCurrency(val.ebay)}</span>
+              <span>•</span>
+              <span class="text-purple-400/90">Collectr ${formatCurrency(val.collectr)}</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2.5 shrink-0">
+            <div class="text-right">
+              <div class="text-[11px] text-zinc-400 font-mono">Mkt ${formatCurrency(val.blendedMarket)}</div>
+              <div class="text-xs sm:text-sm font-mono font-extrabold text-emerald-400">formatCurrency(val.instantOffer)<spanclass="text-[10px]font-normal">({payoutRate}%)</span></div>
+            </div>
+
+            <button
+              type="button"
+              onclick="event.stopPropagation(); addCardToSellLot('${card.id}');"
+              title="Add directly to ${payoutRate}% Sell Lot"
+              class="px-2.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-extrabold text-[11px] shadow-md shadow-emerald-500/20 transition active:scale-95 cursor-pointer"
+            >
+              + Sell ${payoutRate}%
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function closeSimilarPopup() {
+      const popup = document.getElementById("similarCardsPopup");
+      if (popup) popup.classList.add("hidden");
+      popupFocusedIndex = -1;
+    }
+
+    function triggerQuickPokemonSearch(pokemonName) {
+      const input = document.getElementById("searchInput");
+      input.value = pokemonName;
+      searchQuery = pokemonName;
+      document.getElementById("clearSearchBtn").classList.remove("hidden");
+      renderCards();
+      renderSimilarCardsPopup(pokemonName);
+      input.focus();
+    }
+
+    function applyPopupToMainGrid() {
+      closeSimilarPopup();
+      renderCards();
+    }
+
+    function focusCardFromPopup(cardId) {
+      const targetCard = cards.find(c => c.id === cardId);
+      if (!targetCard) return;
+
+      // Switch era pill to ALL so the card is guaranteed visible in the grid
+      activeEra = "ALL";
+      document.querySelectorAll(".era-pill").forEach(b => {
+        const isAll = b.dataset.era === "ALL";
+        b.classList.toggle("bg-purple-600", isAll);
+        b.classList.toggle("text-white", isAll);
+        b.classList.toggle("active", isAll);
+        b.classList.toggle("bg-zinc-950", !isAll);
+        b.classList.toggle("text-zinc-400", !isAll);
+        b.classList.toggle("border", !isAll);
+        b.classList.toggle("border-zinc-800", !isAll);
+      });
+
+      // Set search to the specific card name so it surfaces immediately at the top
+      searchQuery = targetCard.name;
+      const input = document.getElementById("searchInput");
+      input.value = targetCard.name;
+      document.getElementById("clearSearchBtn").classList.remove("hidden");
+
+      closeSimilarPopup();
+      renderCards();
+
+      // Smooth scroll and pulse highlight on the card tile
+      requestAnimationFrame(() => {
+        const cardEl = document.getElementById(`card-tile-${cardId}`);
+        if (cardEl) {
+          cardEl.scrollIntoView({ behavior: "smooth", block: "center" });
+          cardEl.classList.add("ring-2", "ring-emerald-400", "shadow-emerald-500/25");
+          setTimeout(() => {
+            cardEl.classList.remove("ring-2", "ring-emerald-400", "shadow-emerald-500/25");
+          }, 2200);
+        }
+      });
+    }
+
+    // =========================================================================
+    // 4. SVG CARD ARTWORK GENERATOR (Sharp Line Ghost/Type Emblems)
+    // =========================================================================
+    function getCardArtworkSVG(card) {
+      const typeThemes = {
+        Psychic: { bg: "from-purple-950 via-indigo-950 to-zinc-950", stroke: "#c084fc", glow: "rgba(168,85,247,0.35)" },
+        Darkness: { bg: "from-slate-900 via-purple-950 to-zinc-950", stroke: "#a855f7", glow: "rgba(139,92,246,0.35)" },
+        Fire: { bg: "from-orange-950 via-red-950 to-zinc-950", stroke: "#fb923c", glow: "rgba(249,115,22,0.35)" },
+        Water: { bg: "from-sky-950 via-blue-950 to-zinc-950", stroke: "#38bdf8", glow: "rgba(56,189,248,0.35)" },
+        Grass: { bg: "from-emerald-950 via-green-950 to-zinc-950", stroke: "#34d399", glow: "rgba(16,185,129,0.35)" },
+        Lightning: { bg: "from-amber-950 via-yellow-950 to-zinc-950", stroke: "#facc15", glow: "rgba(250,204,21,0.35)" },
+        Dragon: { bg: "from-amber-950 via-indigo-950 to-zinc-950", stroke: "#fbbf24", glow: "rgba(245,158,11,0.35)" },
+        Colorless: { bg: "from-zinc-800 via-slate-900 to-zinc-950", stroke: "#e4e4e7", glow: "rgba(228,228,231,0.25)" }
+      };
+
+      const theme = typeThemes[card.type] || typeThemes.Psychic;
+
+      // Custom sharp-line SVG illustrations for Gengar, Haunter, Gastly & iconic cards
+      if (card.artStyle === "gengar") {
+        return `
+          <div class="w-16 h-22 sm:w-20 sm:h-26 rounded-xl bg-gradient-to-br ${theme.bg} border border-purple-500/40 p-1.5 flex flex-col items-center justify-between relative overflow-hidden shrink-0 holo-foil shadow-inner">
+            <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-[0_0_8px_rgba(168,85,247,0.65)]">
+              <!-- Sharp line Gengar silhouette & menacing grin -->
+              <path d="M22 20 L35 34 L43 24 L50 33 L57 24 L65 34 L78 20 L74 44 C82 54 82 70 72 80 L65 88 L56 80 L44 80 L35 88 L28 80 C18 70 18 54 26 44 Z" fill="#1e1035" stroke="#c084fc" stroke-width="2.6" stroke-linejoin="round"/>
+              <!-- Sharp red eyes -->
+              <polygon points="30,48 45,55 32,58" fill="#ef4444" stroke="#fca5a5" stroke-width="1"/>
+              <polygon points="70,48 55,55 68,58" fill="#ef4444" stroke="#fca5a5" stroke-width="1"/>
+              <!-- Menacing toothy grin -->
+              <path d="M28 64 Q50 78 72 64 Q50 71 28 64 Z" fill="#f4f4f5" stroke="#c084fc" stroke-width="1.5"/>
+              <line x1="38" y1="66" x2="38" y2="71" stroke="#18181b" stroke-width="1.5"/>
+              <line x1="46" y1="68" x2="46" y2="73" stroke="#18181b" stroke-width="1.5"/>
+              <line x1="54" y1="68" x2="54" y2="73" stroke="#18181b" stroke-width="1.5"/>
+              <line x1="62" y1="66" x2="62" y2="71" stroke="#18181b" stroke-width="1.5"/>
+            </svg>
+            <span class="text-[9px] font-mono font-bold text-purple-300 tracking-tighter">${card.number}</span>
+          </div>
+        `;
+      }
+
+      if (card.artStyle === "haunter") {
+        return `
+          <div class="w-16 h-22 sm:w-20 sm:h-26 rounded-xl bg-gradient-to-br ${theme.bg} border border-purple-500/40 p-1.5 flex flex-col items-center justify-between relative overflow-hidden shrink-0 holo-foil">
+            <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-[0_0_8px_rgba(168,85,247,0.65)]">
+              <!-- Sharp jagged Haunter spikes -->
+              <path d="M18 24 L36 36 L50 22 L64 36 L82 24 L72 48 L84 56 L68 66 L50 82 L32 66 L16 56 L28 48 Z" fill="#1e1035" stroke="#c084fc" stroke-width="2.5" stroke-linejoin="round"/>
+              <polygon points="32,46 46,52 34,55" fill="#f4f4f5"/>
+              <polygon points="68,46 54,52 66,55" fill="#f4f4f5"/>
+              <path d="M32 62 L40 68 L45 63 L50 69 L55 63 L60 68 L68 62" fill="none" stroke="#f472b6" stroke-width="2.4" stroke-linejoin="round"/>
+            </svg>
+            <span class="text-[9px] font-mono font-bold text-purple-300 tracking-tighter">${card.number}</span>
+          </div>
+        `;
+      }
+
+      if (card.artStyle === "gastly") {
+        return `
+          <div class="w-16 h-22 sm:w-20 sm:h-26 rounded-xl bg-gradient-to-br ${theme.bg} border border-purple-500/40 p-1.5 flex flex-col items-center justify-between relative overflow-hidden shrink-0 holo-foil">
+            <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-[0_0_8px_rgba(168,85,247,0.65)]">
+              <!-- Swirling gas aura -->
+              <circle cx="50" cy="50" r="36" fill="none" stroke="#a855f7" stroke-width="2" stroke-dasharray="8 5"/>
+              <circle cx="50" cy="50" r="24" fill="#18181b" stroke="#e9d5ff" stroke-width="2.4"/>
+              <polygon points="34,44 47,50 35,54" fill="#ffffff"/>
+              <polygon points="66,44 53,50 65,54" fill="#ffffff"/>
+              <path d="M38 60 Q50 70 62 60" fill="none" stroke="#f472b6" stroke-width="2.2"/>
+              <polygon points="41,61 43,66 45,62" fill="#ffffff"/>
+              <polygon points="55,62 57,66 59,61" fill="#ffffff"/>
+            </svg>
+            <span class="text-[9px] font-mono font-bold text-purple-300 tracking-tighter">${card.number}</span>
+          </div>
+        `;
+      }
+
+      // Generic sleek holographic crest for other Pokémon cards
+      return `
+        <div class="w-16 h-22 sm:w-20 sm:h-26 rounded-xl bg-gradient-to-br ${theme.bg} border border-zinc-700/80 p-1.5 flex flex-col items-center justify-between relative overflow-hidden shrink-0 holo-foil">
+          <svg viewBox="0 0 100 100" class="w-full h-full">
+            <polygon points="50,12 84,32 84,68 50,88 16,68 16,32" fill="none" stroke="${theme.stroke}" stroke-width="2.4" stroke-linejoin="round" />
+            <circle cx="50" cy="50" r="18" fill="none" stroke="${theme.stroke}" stroke-width="2" stroke-dasharray="6 4" />
+            <circle cx="50" cy="50" r="6" fill="${theme.stroke}" />
+          </svg>
+          <span class="text-[9px] font-mono font-bold text-zinc-300 tracking-tighter">${card.number}</span>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // 5. MAIN CARDS GRID RENDERER
+    // =========================================================================
+    function renderCards() {
+      const grid = document.getElementById("cardsGrid");
+      const emptyState = document.getElementById("emptyState");
+      const visibleCount = document.getElementById("visibleCount");
+
+      // Filter cards (includes evolution-line awareness when searching a Pokémon name)
+      const q = searchQuery.trim().toLowerCase();
+      const { matchedFamilies } = q ? findSimilarAndRelatedCards(q) : { matchedFamilies: [] };
+      const matchedFamilySet = new Set(matchedFamilies);
+
+      let filtered = cards.filter(card => {
+        const matchesEra =
+          activeEra === "ALL" ||
+          card.era === activeEra ||
+          card.secondaryEra === activeEra;
+
+        const matchesQuery =
+          !q ||
+          card.name.toLowerCase().includes(q) ||
+          (card.pokemon && card.pokemon.toLowerCase().includes(q)) ||
+          card.set.toLowerCase().includes(q) ||
+          card.number.toLowerCase().includes(q) ||
+          card.rarity.toLowerCase().includes(q) ||
+          (card.family && matchedFamilySet.has(card.family));
+
+        return matchesEra && matchesQuery;
+      });
+
+      // Sort cards (prioritize direct name match when searching, then chosen sort order)
+      filtered.sort((a, b) => {
+        if (q) {
+          const aDirect = a.name.toLowerCase().includes(q) ? 1 : 0;
+          const bDirect = b.name.toLowerCase().includes(q) ? 1 : 0;
+          if (aDirect !== bDirect) return bDirect - aDirect;
+        }
+        const valA = calculateCardValuation(a).blendedMarket;
+        const valB = calculateCardValuation(b).blendedMarket;
+        if (sortBy === "value-desc") return valB - valA;
+        if (sortBy === "value-asc") return valA - valB;
+        return a.name.localeCompare(b.name);
+      });
+
+      if (visibleCount) {
+        visibleCount.textContent = filtered.length;
+      }
+
+      if (!grid) {
+        return;
+      }
+
+      if (filtered.length === 0) {
+        grid.innerHTML = "";
+        if (emptyState) emptyState.classList.remove("hidden");
+        return;
+      }
+
+      if (emptyState) emptyState.classList.add("hidden");
+
+      grid.innerHTML = filtered.map(card => {
+        const val = calculateCardValuation(card);
+        const queryEncoded = encodeURIComponent(`${card.name} ${card.number} pokemon card`);
+        const tcgUrl = `https://www.tcgplayer.com/search/pokemon/product?q=${queryEncoded}`;
+        const ebaySoldUrl = `https://www.ebay.com/sch/i.html?_nkw=${queryEncoded}&LH_Sold=1&LH_Complete=1`;
+        const collectrUrl = `https://www.pricecharting.com/search-products?q=${queryEncoded}&type=prices`;
+
+        const isGengarFamily = card.era === "Gengar Line";
+        const searchSpecies = (card.pokemon || card.name.split(" ")[0]).replace(/'/g, "\\'");
+
+        return `
+          <article id="card-tile-${card.id}" class="bg-zinc-900/85 hover:bg-zinc-900 border ${isGengarFamily ? 'border-purple-500/35' : 'border-zinc-800/90'} rounded-2xl p-4 flex flex-col justify-between gap-3.5 shadow-lg transition-all duration-300 group">
+            <!-- Top Row: Card Art + Identity + Per-Card Condition/Grade -->
+            <div class="flex gap-3.5">
+              ${getCardArtworkSVG(card)}
+
+              <div class="flex-1 min-w-0">
+                <div class="flex items-start justify-between gap-2">
+                  <h3 class="text-sm sm:text-base font-bold text-white leading-snug group-hover:text-purple-300 transition truncate" title="${card.name}">
+                    ${card.name}
+                  </h3>
+                </div>
+                <p class="text-xs text-zinc-400 truncate mt-0.5">card.set•<spanclass="font-monotext-zinc-300">#{card.number}</span></p>
+
+                <!-- Rarity, Grade & Similar Cards Trigger Row -->
+                <div class="flex flex-wrap items-center gap-1.5 mt-2">
+                  <span class="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700/80">
+                    ${card.rarity}
+                  </span>
+                  ${val.grade !== "RAW" ? `
+                    <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                      ${GRADE_MULTIPLIERS[val.grade].badge} SLAB
+                    </span>
+                  ` : `
+                    <span class="px-2 py-0.5 text-[10px] font-mono font-semibold rounded-md bg-zinc-950 text-zinc-400 border border-zinc-800">
+                      ${val.condition}
+                    </span>
+                  `}
+                  <button
+                    type="button"
+                    onclick="triggerQuickPokemonSearch('${searchSpecies}'); window.scrollTo({ top: 0, behavior: 'smooth' });"
+                    title="Open Similar Cards & Evolution Line Popup for ${searchSpecies}"
+                    class="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-purple-500/15 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 transition cursor-pointer"
+                  >
+                    Similar ▾
+                  </button>
+                </div>
+
+                <!-- Per-Card Override Selectors -->
+                <div class="grid grid-cols-2 gap-1.5 mt-2.5">
+                  <select
+                    onchange="updateCardOverride('${card.id}', 'condition', this.value)"
+                    ${val.grade !== "RAW" ? "disabled" : ""}
+                    aria-label="Condition for ${card.name}"
+                    class="px-2 py-1 bg-zinc-950 border border-zinc-800 rounded-lg text-[11px] text-zinc-300 outline-none disabled:opacity-40 cursor-pointer"
+                  >
+                    <option value="NM" ${val.condition === "NM" ? "selected" : ""}>NM (100%)</option>
+                    <option value="LP" ${val.condition === "LP" ? "selected" : ""}>LP (85%)</option>
+                    <option value="MP" ${val.condition === "MP" ? "selected" : ""}>MP (70%)</option>
+                    <option value="HP" ${val.condition === "HP" ? "selected" : ""}>HP (50%)</option>
+                    <option value="DMG" ${val.condition === "DMG" ? "selected" : ""}>DMG (35%)</option>
+                  </select>
+
+                  <select
+                    onchange="updateCardOverride('${card.id}', 'grade', this.value)"
+                    aria-label="Grade for ${card.name}"
+                    class="px-2 py-1 bg-zinc-950 border border-zinc-800 rounded-lg text-[11px] text-zinc-300 outline-none cursor-pointer"
+                  >
+                    <option value="RAW" ${val.grade === "RAW" ? "selected" : ""}>Raw</option>
+                    <option value="PSA9" ${val.grade === "PSA9" ? "selected" : ""}>PSA 9</option>
+                    <option value="BGS95" ${val.grade === "BGS95" ? "selected" : ""}>BGS 9.5</option>
+                    <option value="CGC10" ${val.grade === "CGC10" ? "selected" : ""}>CGC 10</option>
+                    <option value="PSA10" ${val.grade === "PSA10" ? "selected" : ""}>PSA 10</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Multi-Source Reference Pricing Matrix -->
+            <div class="grid grid-cols-3 gap-2 p-2.5 rounded-xl bg-zinc-950/90 border border-zinc-800/80">
+              <a href="${tcgUrl}" target="_blank" rel="noopener noreferrer" class="group/link p-1.5 rounded-lg hover:bg-zinc-900 transition">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-semibold text-blue-400">TCGPlayer</span>
+                  <span class="text-[10px] text-zinc-600 group-hover/link:text-blue-400">↗</span>
+                </div>
+                <div class="text-xs sm:text-sm font-mono font-bold text-zinc-100 mt-0.5">${formatCurrency(val.tcg)}</div>
+              </a>
+
+              <a href="${ebaySoldUrl}" target="_blank" rel="noopener noreferrer" class="group/link p-1.5 rounded-lg hover:bg-zinc-900 transition border-x border-zinc-800/80">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-semibold text-amber-400">eBay Sold</span>
+                  <span class="text-[10px] text-zinc-600 group-hover/link:text-amber-400">↗</span>
+                </div>
+                <div class="text-xs sm:text-sm font-mono font-bold text-zinc-100 mt-0.5">${formatCurrency(val.ebay)}</div>
+              </a>
+
+              <a href="${collectrUrl}" target="_blank" rel="noopener noreferrer" class="group/link p-1.5 rounded-lg hover:bg-zinc-900 transition">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-semibold text-purple-400">Collectr</span>
+                  <span class="text-[10px] text-zinc-600 group-hover/link:text-purple-400">↗</span>
+                </div>
+                <div class="text-xs sm:text-sm font-mono font-bold text-zinc-100 mt-0.5">${formatCurrency(val.collectr)}</div>
+              </a>
+            </div>
+
+            <!-- Bottom Row: Blended Market + 75% Sell Offer + Add to Lot CTA -->
+            <div class="flex items-center justify-between gap-2 pt-1">
+              <div>
+                <div class="text-[11px] text-zinc-400">
+                  Blended Avg: <span class="font-mono font-semibold text-zinc-200">${formatCurrency(val.blendedMarket)}</span>
+                </div>
+                <div class="flex items-baseline gap-1.5 mt-0.5">
+                  <span class="text-xs font-bold text-emerald-400">${payoutRate}% Sell:</span>
+                  <span class="text-base sm:text-lg font-mono font-extrabold text-emerald-400">${formatCurrency(val.instantOffer)}</span>
+                </div>
+              </div>
+
+              <button
+                onclick="addCardToSellLot('${card.id}')"
+                class="px-3.5 py-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500 text-emerald-400 hover:text-zinc-950 border border-emerald-500/40 font-bold text-xs transition active:scale-[0.97] flex items-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                <span>Sell @ ${payoutRate}%</span>
+              </button>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    // =========================================================================
+    // 6. SELL LOT / TRADE-IN CART LOGIC
+    // =========================================================================
+    function addCardToSellLot(cardId) {
+      const card = cards.find(c => c.id === cardId);
+      if (!card) return;
+
+      const val = calculateCardValuation(card);
+      const existingIndex = sellLot.findIndex(
+        item => item.cardId === card.id && item.condition === val.condition && item.grade === val.grade
+      );
+
+      if (existingIndex > -1) {
+        sellLot[existingIndex].qty += 1;
+      } else {
+        sellLot.push({
+          lotItemId: `card.id-{val.condition}-val.grade-{Date.now()}`,
+          cardId: card.id,
+          name: card.name,
+          set: card.set,
+          number: card.number,
+          condition: val.condition,
+          grade: val.grade,
+          tcg: val.tcg,
+          ebay: val.ebay,
+          collectr: val.collectr,
+          blendedMarket: val.blendedMarket,
+          qty: 1
+        });
+      }
+
+      renderSellLot();
+      showToast(`Added card.name({val.grade === "RAW" ? val.condition : GRADE_MULTIPLIERS[val.grade].badge}) to Sell Lot`);
+    }
+
+    function updateLotItemQty(lotItemId, delta) {
+      const idx = sellLot.findIndex(item => item.lotItemId === lotItemId);
+      if (idx === -1) return;
+
+      sellLot[idx].qty += delta;
+      if (sellLot[idx].qty <= 0) {
+        sellLot.splice(idx, 1);
+      }
+      renderSellLot();
+    }
+
+    function clearSellLot() {
+      if (sellLot.length === 0) return;
+      sellLot = [];
+      renderSellLot();
+      showToast("Sell lot cleared");
+    }
+
+    function renderSellLot() {
+      const desktopContainer = document.getElementById("sellLotItemsContainer");
+      const mobileContainer = document.getElementById("mobileLotItemsContainer");
+      const emptyPlaceholder = document.getElementById("emptyLotPlaceholder");
+      const executeBtn = document.getElementById("executeOfferBtn");
+
+      const totalQty = sellLot.reduce((sum, item) => sum + item.qty, 0);
+      document.getElementById("lotItemCountBadge").textContent = totalQty;
+      document.getElementById("mobileLotCountBadge").textContent = totalQty;
+      document.getElementById("mobileDrawerCount").textContent = totalQty;
+
+      document.getElementById("sidebarRateText").textContent = `${payoutRate}%`;
+      document.getElementById("payoutBoxPct").textContent = `${payoutRate}%`;
+      document.getElementById("mobileDrawerPct").textContent = `${payoutRate}%`;
+
+      if (sellLot.length === 0) {
+        desktopContainer.innerHTML = "";
+        desktopContainer.appendChild(emptyPlaceholder);
+        emptyPlaceholder.classList.remove("hidden");
+        mobileContainer.innerHTML = `<p class="text-xs text-zinc-500 text-center py-10">No cards added to your sell lot yet.</p>`;
+
+        document.getElementById("lotTcgTotal").textContent = "$0.00";
+        document.getElementById("lotEbayTotal").textContent = "$0.00";
+        document.getElementById("lotCollectrTotal").textContent = "$0.00";
+        document.getElementById("lotMarketTotal").textContent = "$0.00";
+        document.getElementById("lotCashPayout").textContent = "$0.00";
+        document.getElementById("mobileLotMarket").textContent = "$0.00";
+        document.getElementById("mobileLotPayout").textContent = "$0.00";
+        executeBtn.disabled = true;
+        return;
+      }
+
+      executeBtn.disabled = false;
+
+      let totalTcg = 0;
+      let totalEbay = 0;
+      let totalCollectr = 0;
+      let totalMarket = 0;
+
+      const itemsHTML = sellLot.map(item => {
+        const lineMarket = item.blendedMarket * item.qty;
+        const linePayout = lineMarket * (payoutRate / 100);
+
+        totalTcg += item.tcg * item.qty;
+        totalEbay += item.ebay * item.qty;
+        totalCollectr += item.collectr * item.qty;
+        totalMarket += lineMarket;
+
+        const badgeText = item.grade === "RAW" ? item.condition : GRADE_MULTIPLIERS[item.grade].badge;
+
+        return `
+          <div class="p-3 rounded-xl bg-zinc-950 border border-zinc-800/90 flex items-center justify-between gap-2.5">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-bold text-white truncate">${item.name}</span>
+              </div>
+              <div class="flex items-center gap-2 mt-1 text-[11px] text-zinc-400">
+                <span class="px-1.5 py-0.2 rounded bg-zinc-900 border border-zinc-800 font-mono text-[10px] text-zinc-300">${badgeText}</span>
+                <span>Mkt: <span class="font-mono text-zinc-300">${formatCurrency(lineMarket)}</span></span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2.5 shrink-0">
+              <div class="text-right">
+                <div class="text-xs font-mono font-extrabold text-emerald-400">${formatCurrency(linePayout)}</div>
+                <div class="text-[10px] text-zinc-500 font-mono">@ ${payoutRate}%</div>
+              </div>
+
+              <!-- Qty Controls -->
+              <!-- Popup Footer -->
+              <div class="px-4 py-2 bg-zinc-900/90 border-t border-zinc-800 flex items-center justify-between text-[11px] text-zinc-400">
+                <span>Use <kbd class="px-1 py-0.2 bg-zinc-800 rounded text-zinc-300 font-mono">↑</kbd> <kbd class="px-1 py-0.2 bg-zinc-800 rounded text-zinc-300 font-mono">↓</kbd> to navigate, <kbd class="px-1 py-0.2 bg-zinc-800 rounded text-zinc-300 font-mono">Enter</kbd> to add</span>
+                <button type="button" onclick="closeSimilarPopup()" class="text-purple-400 hover:text-purple-300 font-semibold cursor-pointer">Close Popup</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      desktopContainer.innerHTML = itemsHTML;
+      mobileContainer.innerHTML = itemsHTML;
+
+      const totalCashPayout = totalMarket * (payoutRate / 100);
+
+      document.getElementById("lotTcgTotal").textContent = formatCurrency(totalTcg);
+      document.getElementById("lotEbayTotal").textContent = formatCurrency(totalEbay);
+      document.getElementById("lotCollectrTotal").textContent = formatCurrency(totalCollectr);
+      document.getElementById("lotMarketTotal").textContent = formatCurrency(totalMarket);
+      document.getElementById("lotCashPayout").textContent = formatCurrency(totalCashPayout);
+
+      // Update fee & shipping savings breakdown (~13.25% marketplace fees + shipping saved)
+      const feeAdvantageNote = document.getElementById("feeAdvantageNote");
+      const feeSavedAmount = document.getElementById("feeSavedAmount");
+      if (totalMarket > 0) {
+        const estimatedMarketplaceFees = totalMarket * 0.1325 + (sellLot.length * 1.25);
+        feeSavedAmount.textContent = formatCurrency(estimatedMarketplaceFees);
+        feeAdvantageNote.classList.remove("hidden");
+      } else {
+        feeAdvantageNote.classList.add("hidden");
+      }
+
+      document.getElementById("mobileLotMarket").textContent = formatCurrency(totalMarket);
+      document.getElementById("mobileLotPayout").textContent = formatCurrency(totalCashPayout);
+    }
+
+    // =========================================================================
+    // 7. FILTER, SEARCH, POPUP KEYBOARD NAV & SLIDER EVENT HANDLERS
+    // =========================================================================
+    function updateCardOverride(cardId, field, value) {
+      if (!cardOverrides[cardId]) {
+        cardOverrides[cardId] = {};
+      }
+      cardOverrides[cardId][field] = value;
+      renderCards();
+    }
+
+    function syncPayoutRate(newRate) {
+      payoutRate = parseInt(newRate, 10);
+      document.getElementById("globalPayoutSlider").value = payoutRate;
+      document.getElementById("mobilePayoutSlider").value = payoutRate;
+      document.getElementById("headerPayoutBadge").textContent = `${payoutRate}% Cash`;
+      document.getElementById("mobilePayoutLabel").textContent = `${payoutRate}%`;
+      renderCards();
+      renderSellLot();
+      renderRecentSalesPanel();
+    }
+
+    // =========================================================================
+    // 7B. ROTATING MOST RECENT SALES PANEL LOGIC
+    // =========================================================================
+    function renderRecentSalesPanel() {
+      const container = document.getElementById("recentSalesPanelBody");
+      const dotsContainer = document.getElementById("recentSalesDotButtons");
+      const statusText = document.getElementById("recentSalesStatusText");
+      if (!container || !dotsContainer || RECENT_SALES_FEED.length === 0) return;
+
+      recentSaleIndex = ((recentSaleIndex % RECENT_SALES_FEED.length) + RECENT_SALES_FEED.length) % RECENT_SALES_FEED.length;
+      const featured = RECENT_SALES_FEED[recentSaleIndex];
+      const buybackOffer = featured.soldPrice * (payoutRate / 100);
+
+      // Build next 2 upcoming sales in rotation
+      const upcoming = [1, 2].map(offset => RECENT_SALES_FEED[(recentSaleIndex + offset) % RECENT_SALES_FEED.length]);
+
+      container.innerHTML = `
+        <div class="p-3.5 rounded-xl bg-zinc-950/95 border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all duration-300">
+          <div class="min-w-0 space-y-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded-md border ${featured.sourceColor}">
+                ${featured.source}
+              </span>
+              <span class="text-[11px] font-mono text-zinc-500">${featured.timeAgo}</span>
+              <span class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-900 border border-zinc-800 text-zinc-300">
+                ${featured.conditionOrGrade}
+              </span>
+            </div>
+            <div class="text-sm sm:text-base font-extrabold text-white truncate">${featured.name}</div>
+            <div class="text-xs text-zinc-400 truncate">${featured.set}</div>
+          </div>
+
+          <div class="flex sm:flex-col items-center sm:items-end justify-between gap-2 shrink-0">
+            <div class="text-left sm:text-right">
+              <div class="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">Recent Sale</div>
+              <div class="text-base sm:text-lg font-mono font-extrabold text-white">${formatCurrency(featured.soldPrice)}</div>
+              <div class="text-xs font-mono font-bold text-emerald-400">
+                ${payoutRate}% Offer: ${formatCurrency(buybackOffer)}
+              </div>
+            </div>
+            <button
+              type="button"
+              onclick="addCardToSellLot('${featured.cardId}')"
+              class="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-extrabold text-xs shadow-md shadow-emerald-500/20 transition cursor-pointer"
+            >
+              + Sell @ ${payoutRate}%
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          ${upcoming.map(item => `
+            <button
+              type="button"
+              onclick="addCardToSellLot('${item.cardId}')"
+              class="p-2.5 rounded-xl bg-zinc-950/60 hover:bg-zinc-950 border border-zinc-800/70 hover:border-zinc-700 text-left flex items-center justify-between gap-2 transition cursor-pointer"
+            >
+              <div class="min-w-0">
+                <div class="text-xs font-bold text-zinc-200 truncate">${item.name}</div>
+                <div class="text-[10px] font-mono text-zinc-500 truncate">${item.source} • ${item.timeAgo}</div>
+              </div>
+              <div class="text-right shrink-0">
+                <div class="text-xs font-mono font-bold text-zinc-200">${formatCurrency(item.soldPrice)}</div>
+                <div class="text-[10px] font-mono font-bold text-emerald-400">${formatCurrency(item.soldPrice * (payoutRate / 100))} @ ${payoutRate}%</div>
+              </div>
+            </button>
+          `).join("")}
+        </div>
+      `;
+
+      dotsContainer.innerHTML = RECENT_SALES_FEED.map((item, idx) => `
+        <button
+          type="button"
+          onclick="jumpToRecentSale(${idx})"
+          aria-label="Show recent sale ${idx + 1}: ${item.name}"
+          class="h-2 rounded-full transition-all cursor-pointer ${idx === recentSaleIndex ? "w-6 bg-emerald-400" : "w-2 bg-zinc-700 hover:bg-zinc-500"}"
+        ></button>
+      `).join("");
+
+      if (statusText) {
+        statusText.textContent = isRecentSalesRotating
+          ? `Sale ${recentSaleIndex + 1} of ${RECENT_SALES_FEED.length} • Auto-rotating every 4s`
+          : `Sale ${recentSaleIndex + 1} of ${RECENT_SALES_FEED.length} • Paused`;
+      }
+    }
+
+    function stepRecentSales(delta) {
+      recentSaleIndex += delta;
+      renderRecentSalesPanel();
+    }
+
+    function jumpToRecentSale(idx) {
+      recentSaleIndex = idx;
+      renderRecentSalesPanel();
+    }
+
+    function toggleRecentSalesRotation() {
+      isRecentSalesRotating = !isRecentSalesRotating;
+      const btn = document.getElementById("toggleSalesRotationBtn");
+      if (btn) btn.textContent = isRecentSalesRotating ? "Pause" : "Resume";
+      if (isRecentSalesRotating) {
+        startRecentSalesRotation();
+      } else if (recentSalesTimer) {
+        clearInterval(recentSalesTimer);
+        recentSalesTimer = null;
+      }
+      renderRecentSalesPanel();
+    }
+
+    function startRecentSalesRotation() {
+      if (recentSalesTimer) clearInterval(recentSalesTimer);
+      recentSalesTimer = setInterval(() => {
+        if (isRecentSalesRotating) {
+          recentSaleIndex = (recentSaleIndex + 1) % RECENT_SALES_FEED.length;
+          renderRecentSalesPanel();
+        }
+      }, 4000);
+    }
+
+    document.getElementById("globalPayoutSlider").addEventListener("input", e => syncPayoutRate(e.target.value));
+    document.getElementById("mobilePayoutSlider").addEventListener("input", e => syncPayoutRate(e.target.value));
+    document.getElementById("reset75Btn").addEventListener("click", () => {
+      syncPayoutRate(75);
+      showToast("Buyout rate reset to standard 75%");
+    });
+
+    document.getElementById("searchInput").addEventListener("input", e => {
+      searchQuery = e.target.value;
+      const trimmed = searchQuery.trim();
+      document.getElementById("clearSearchBtn").classList.toggle("hidden", !trimmed);
+      renderCards();
+      if (trimmed.length > 0) {
+        renderSimilarCardsPopup(trimmed);
+      } else {
+        closeSimilarPopup();
+      }
+    });
+
+    document.getElementById("searchInput").addEventListener("focus", e => {
+      const trimmed = e.target.value.trim();
+      if (trimmed.length > 0) {
+        renderSimilarCardsPopup(trimmed);
+      } else {
+        closeSimilarPopup();
+      }
+    });
+
+    function clearSearch() {
+      searchQuery = "";
+      document.getElementById("searchInput").value = "";
+      document.getElementById("clearSearchBtn").classList.add("hidden");
+      closeSimilarPopup();
+      renderCards();
+    }
+
+    document.getElementById("globalConditionSelect").addEventListener("change", e => {
+      globalCondition = e.target.value;
+      cardOverrides = {}; // Reset per-card overrides so global applies cleanly
+      renderCards();
+    });
+
+    document.getElementById("globalGradeSelect").addEventListener("change", e => {
+      globalGrade = e.target.value;
+      cardOverrides = {};
+      renderCards();
+    });
+
+    document.getElementById("sortSelect").addEventListener("change", e => {
+      sortBy = e.target.value;
+      renderCards();
+    });
+
+    document.querySelectorAll(".era-pill").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".era-pill").forEach(b => {
+          b.classList.remove("bg-purple-600", "text-white", "active");
+          b.classList.add("bg-zinc-950", "text-zinc-400", "border", "border-zinc-800");
+        });
+        btn.classList.remove("bg-zinc-950", "text-zinc-400", "border", "border-zinc-800");
+        btn.classList.add("bg-purple-600", "text-white", "active");
+        activeEra = btn.dataset.era;
+        renderCards();
+      });
+    });
+
+    // =========================================================================
+    // 8. CUSTOM CARD MODAL HANDLERS
+    // =========================================================================
+    function openCustomCardModal(prefillName = "") {
+      const modal = document.getElementById("customCardModal");
+      if (prefillName) {
+        document.getElementById("customName").value = prefillName;
+      }
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeCustomCardModal() {
+      const modal = document.getElementById("customCardModal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    function handleCustomCardSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById("customName").value.trim();
+      const set = document.getElementById("customSet").value.trim();
+      const number = document.getElementById("customNumber").value.trim() || "PROMO";
+      const rarity = document.getElementById("customRarity").value;
+      const type = document.getElementById("customType").value;
+
+      const tcgPrice = parseFloat(document.getElementById("customTcgPrice").value);
+      const ebayRaw = document.getElementById("customEbayPrice").value;
+      const collectrRaw = document.getElementById("customCollectrPrice").value;
+
+      // Auto-estimate eBay Sold (+4%) and Collectr (+2%) if left blank
+      const ebayPrice = ebayRaw ? parseFloat(ebayRaw) : +(tcgPrice * 1.04).toFixed(2);
+      const collectrPrice = collectrRaw ? parseFloat(collectrRaw) : +(tcgPrice * 1.02).toFixed(2);
+
+      const lowerName = name.toLowerCase();
+      let artStyle = "crest";
+      if (lowerName.includes("gengar")) artStyle = "gengar";
+      else if (lowerName.includes("haunter")) artStyle = "haunter";
+      else if (lowerName.includes("gastly")) artStyle = "gastly";
+
+      const newCard = {
+        id: `custom-${Date.now()}`,
+        name,
+        pokemon: name.split(" ")[0],
+        family: artStyle !== "crest" ? "gengar-line" : "custom",
+        set,
+        number,
+        era: artStyle !== "crest" ? "Gengar Line" : "Sword & Shield",
+        rarity,
+        type,
+        artStyle,
+        tcgPrice,
+        ebayPrice,
+        collectrPrice
+      };
+
+      cards.unshift(newCard);
+      document.getElementById("customCardForm").reset();
+      closeCustomCardModal();
+      renderCards();
+      showToast(`Added "${name}" to catalog!`);
+    }
+
+    // =========================================================================
+    // 9. QUOTE / SELL OFFER RECEIPT MODAL & CLIPBOARD EXPORT
+    // =========================================================================
+    function openQuoteModal() {
+      if (sellLot.length === 0) return;
+
+      const quoteId = `PV-${Math.floor(100000 + Math.random() * 900000)}`;
+      document.getElementById("quoteIdDisplay").textContent = quoteId;
+      document.getElementById("quoteTierDisplay").textContent = `${payoutRate}% Instant Cash`;
+      document.getElementById("quotePctLabel").textContent = `${payoutRate}%`;
+      document.getElementById("quoteDateDisplay").textContent = new Date().toLocaleDateString("en-US", {
+        month: "short", day: "numeric", year: "numeric"
+      });
+
+      const tbody = document.getElementById("quoteTableBody");
+      let totalMarket = 0;
+
+      tbody.innerHTML = sellLot.map(item => {
+        const lineMarket = item.blendedMarket * item.qty;
+        const linePayout = lineMarket * (payoutRate / 100);
+        totalMarket += lineMarket;
+        const badgeText = item.grade === "RAW" ? item.condition : GRADE_MULTIPLIERS[item.grade].badge;
+
+        return `
+          <tr>
+            <td class="py-2.5 px-3">
+              <div class="font-bold text-white">${item.qty}x ${item.name}</div>
+              <div class="text-[11px] text-zinc-400">item.set(#{item.number}) • <span class="text-zinc-300 font-mono">${badgeText}</span></div>
+            </td>
+            <td class="py-2.5 px-3 text-right font-mono text-zinc-300">${formatCurrency(lineMarket)}</td>
+            <td class="py-2.5 px-3 text-right font-mono font-bold text-emerald-400">${formatCurrency(linePayout)}</td>
+          </tr>
+        `;
+      }).join("");
+
+      const totalCash = totalMarket * (payoutRate / 100);
+      document.getElementById("quoteMarketTotal").textContent = formatCurrency(totalMarket);
+      document.getElementById("quoteCashTotal").textContent = formatCurrency(totalCash);
+
+      const modal = document.getElementById("quoteModal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeQuoteModal() {
+      const modal = document.getElementById("quoteModal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    function copyQuoteReceipt() {
+      const quoteId = document.getElementById("quoteIdDisplay").textContent;
+      let totalMarket = 0;
+      const lines = sellLot.map(item => {
+        const lineMarket = item.blendedMarket * item.qty;
+        const linePayout = lineMarket * (payoutRate / 100);
+        totalMarket += lineMarket;
+        const condBadge = item.grade === "RAW" ? item.condition : GRADE_MULTIPLIERS[item.grade].badge;
+        return `• ${item.qty}x item.name[{condBadge}] — Mkt: ${formatCurrency(lineMarket)} | ${payoutRate}% Offer: ${formatCurrency(linePayout)}`;
+      });
+
+      const totalCash = totalMarket * (payoutRate / 100);
+      const receiptText = [
+        `POKÉVAULT payoutRate%INSTANTBUYLISTQUOTE({quoteId})`,
+        `Refs: TCGPlayer + eBay Last Sold + Collectr Blended Index`,
+        `----------------------------------------------------`,
+        ...lines,
+        `----------------------------------------------------`,
+        `Total Blended Market Value: ${formatCurrency(totalMarket)}`,
+        `Instant Cash Offer (${payoutRate}%): ${formatCurrency(totalCash)}`
+      ].join("\n");
+
+      // Safe textarea copy for iframe compatibility
+      const textarea = document.createElement("textarea");
+      textarea.value = receiptText;
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand("copy");
+        showToast("Quote receipt copied to clipboard!");
+      } catch (err) {
+        showToast("Unable to copy receipt automatically.");
+      }
+      document.body.removeChild(textarea);
+    }
+
+    function confirmSaleSubmission() {
+      closeQuoteModal();
+      showToast(`Sell offer locked in at ${payoutRate}%! Ready for payout.`);
+    }
+
+    // =========================================================================
+    // 9B. SHAREABLE LINK GENERATOR (URL HASH STATE)
+    // =========================================================================
+    function buildShareableUrl() {
+      try {
+        const compactLot = sellLot.map(item => ({
+          c: item.cardId,
+          cond: item.condition,
+          g: item.grade,
+          q: item.qty
+        }));
+        const payload = {
+          r: payoutRate,
+          cond: globalCondition,
+          g: globalGrade,
+          era: activeEra,
+          q: searchQuery.trim(),
+          lot: compactLot
+        };
+        const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+        const baseHref = window.location.href.split("#")[0];
+        return `baseHref#v1={encoded}`;
+      } catch (err) {
+        return window.location.href;
+      }
+    }
+
+    function applySharedUrlState() {
+      try {
+        const hash = window.location.hash || "";
+        if (!hash.startsWith("#v1=")) return;
+        const encoded = hash.slice(4);
+        if (!encoded) return;
+
+        const jsonStr = decodeURIComponent(escape(atob(encoded)));
+        const payload = JSON.parse(jsonStr);
+
+        if (typeof payload.cond === "string" && CONDITION_MULTIPLIERS[payload.cond]) {
+          globalCondition = payload.cond;
+          const condSelect = document.getElementById("globalConditionSelect");
+          if (condSelect) condSelect.value = globalCondition;
+        }
+
+        if (typeof payload.g === "string" && GRADE_MULTIPLIERS[payload.g]) {
+          globalGrade = payload.g;
+          const gradeSelect = document.getElementById("globalGradeSelect");
+          if (gradeSelect) gradeSelect.value = globalGrade;
+        }
+
+        if (typeof payload.era === "string") {
+          activeEra = payload.era;
+          document.querySelectorAll(".era-pill").forEach(b => {
+            const matched = b.dataset.era === activeEra;
+            b.classList.toggle("bg-purple-600", matched);
+            b.classList.toggle("text-white", matched);
+            b.classList.toggle("active", matched);
+            b.classList.toggle("bg-zinc-950", !matched);
+            b.classList.toggle("text-zinc-400", !matched);
+            b.classList.toggle("border", !matched);
+            b.classList.toggle("border-zinc-800", !matched);
+          });
+        }
+
+        if (typeof payload.r === "number" && payload.r >= 50 && payload.r <= 90) {
+          payoutRate = payload.r;
+          document.getElementById("globalPayoutSlider").value = payoutRate;
+          document.getElementById("mobilePayoutSlider").value = payoutRate;
+          document.getElementById("headerPayoutBadge").textContent = `${payoutRate}% Cash`;
+          document.getElementById("mobilePayoutLabel").textContent = `${payoutRate}%`;
+        }
+
+        if (Array.isArray(payload.lot) && payload.lot.length > 0) {
+          const restoredLot = [];
+          payload.lot.forEach(entry => {
+            const card = cards.find(c => c.id === entry.c);
+            const cond = CONDITION_MULTIPLIERS[entry.cond] ? entry.cond : "NM";
+            const grade = GRADE_MULTIPLIERS[entry.g] ? entry.g : "RAW";
+            const qty = Math.max(1, parseInt(entry.q, 10) || 1);
+            if (!card) return;
+
+            const condMult = grade === "RAW" ? CONDITION_MULTIPLIERS[cond].factor : 1.0;
+            const gradeMult = GRADE_MULTIPLIERS[grade].factor;
+            const mult = condMult * gradeMult;
+            const tcg = card.tcgPrice * mult;
+            const ebay = card.ebayPrice * mult;
+            const collectr = card.collectrPrice * mult;
+            const blendedMarket = (tcg + ebay + collectr) / 3;
+
+            restoredLot.push({
+              lotItemId: `card.id-{cond}-grade-{Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+              cardId: card.id,
+              name: card.name,
+              set: card.set,
+              number: card.number,
+              condition: cond,
+              grade,
+              tcg,
+              ebay,
+              collectr,
+              blendedMarket,
+              qty
+            });
+          });
+          if (restoredLot.length > 0) {
+            sellLot = restoredLot;
+          }
+        }
+
+        if (typeof payload.q === "string" && payload.q.trim().length > 0) {
+          searchQuery = payload.q.trim();
+          const input = document.getElementById("searchInput");
+          if (input) input.value = searchQuery;
+          const clearBtn = document.getElementById("clearSearchBtn");
+          if (clearBtn) clearBtn.classList.remove("hidden");
+        }
+      } catch (err) {
+        // Ignore malformed share hashes safely
+      }
+    }
+
+    function openShareModal() {
+      const shareUrl = buildShareableUrl();
+      const input = document.getElementById("shareUrlInput");
+      if (input) input.value = shareUrl;
+
+      const rateLabel = document.getElementById("shareModalRateLabel");
+      if (rateLabel) rateLabel.textContent = `${payoutRate}%`;
+
+      const lotQty = sellLot.reduce((sum, item) => sum + item.qty, 0);
+      const gradeLabel = GRADE_MULTIPLIERS[globalGrade]?.badge || "RAW";
+      const summaryEl = document.getElementById("shareSummaryDetails");
+      if (summaryEl) {
+        summaryEl.textContent = `${payoutRate}% Buyout • ${globalCondition} / ${gradeLabel} • lotQtyitem{lotQty === 1 ? "" : "s"} in Sell Lot`;
+      }
+
+      const notice = document.getElementById("sharePreviewNotice");
+      const originType = document.getElementById("shareOriginType");
+      const isSandboxOrLocal =
+        window.location.protocol === "blob:" ||
+        window.location.protocol === "file:" ||
+        window.location.origin === "null" ||
+        !window.location.hostname;
+
+      if (notice) {
+        if (isSandboxOrLocal) {
+          if (originType) originType.textContent = window.location.protocol || "sandboxed preview";
+          notice.classList.remove("hidden");
+        } else {
+          notice.classList.add("hidden");
+        }
+      }
+
+      const modal = document.getElementById("shareLinkModal");
+      if (modal) {
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+      }
+    }
+
+    function closeShareModal() {
+      const modal = document.getElementById("shareLinkModal");
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
+    }
+
+    function copyShareLink() {
+      const url = buildShareableUrl();
+      const input = document.getElementById("shareUrlInput");
+      if (input) input.value = url;
+
+      const textarea = document.createElement("textarea");
+      textarea.value = url;
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand("copy");
+        showToast("Share link copied to clipboard!");
+      } catch (err) {
+        showToast("Select the link box and press Ctrl/Cmd + C to copy.");
+      }
+      document.body.removeChild(textarea);
+    }
+
+    // =========================================================================
+    // 10. MOBILE DRAWER & TOAST NOTIFICATIONS
+    // =========================================================================
+    function toggleMobileLot() {
+      const drawer = document.getElementById("mobileLotDrawer");
+      if (drawer) drawer.classList.toggle("hidden");
+    }
+
+    function showToast(message) {
+      const container = document.getElementById("toastContainer");
+      if (!container) return;
+      const toast = document.createElement("div");
+      toast.className = "px-4 py-2.5 rounded-xl bg-zinc-900/95 border border-emerald-500/40 text-xs font-semibold text-white shadow-2xl flex items-center gap-2";
+      toast.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span>${message}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.classList.add("opacity-0", "transition-opacity", "duration-300");
+        setTimeout(() => toast.remove(), 320);
+      }, 2400);
+    }
+
+    // =========================================================================
+    // 11. INITIALIZATION
+    // =========================================================================
+    applySharedUrlState();
+    renderCards();
+    renderSellLot();
+    renderRecentSalesPanel();
+    startRecentSalesRotation();
+  </script>
+</body>
+</html>
+
