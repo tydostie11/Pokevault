@@ -409,6 +409,159 @@
         </div>
       </section>
 
+      <!-- My Collection & Portfolio Tracker (Real-Time Market + Persistent 75% Buyback Offer) -->
+      <section id="myCollectionSection" aria-label="My Collection Tracker" class="bg-zinc-900/80 border border-zinc-800/90 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
+        <!-- Section Header -->
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-zinc-800/80">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-purple-500/15 border border-purple-500/35 flex items-center justify-center text-purple-300 text-base">
+              🗂️
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-sm sm:text-base font-extrabold text-white tracking-tight">My Collection & Portfolio Tracker</h2>
+                <span id="collectionTotalBadge" class="px-2 py-0.5 text-[11px] font-mono font-bold rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                  0 cards
+                </span>
+              </div>
+              <p class="text-xs text-zinc-400">Input your binder or slabs to track real-time market value & live <span class="promptRateText">75%</span> buyout</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              onclick="openCustomCardModal(true)"
+              class="px-3 py-1.5 rounded-xl bg-zinc-950 hover:bg-zinc-800 border border-zinc-700/80 text-xs font-semibold text-zinc-200 transition cursor-pointer"
+            >
+              + Custom Entry
+            </button>
+            <button
+              id="clearCollectionBtn"
+              type="button"
+              onclick="clearMyCollection()"
+              class="hidden px-2.5 py-1.5 rounded-xl bg-zinc-950 hover:bg-rose-950/50 border border-zinc-800 hover:border-rose-500/40 text-xs font-semibold text-zinc-400 hover:text-rose-300 transition cursor-pointer"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Collection Input Bar -->
+        <form onsubmit="handleQuickAddToCollection(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 p-3 rounded-xl bg-zinc-950/90 border border-zinc-800/90">
+          <div class="sm:col-span-5">
+            <label for="collectionCardSelect" class="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1">Select Card from Index</label>
+            <select
+              id="collectionCardSelect"
+              class="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 focus:border-purple-500 rounded-xl text-xs text-white outline-none cursor-pointer"
+            >
+              <!-- Populated dynamically -->
+            </select>
+          </div>
+
+          <div class="grid grid-cols-3 sm:col-span-5 gap-2">
+            <div>
+              <label for="collectionGradeSelect" class="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1">Grade</label>
+              <select
+                id="collectionGradeSelect"
+                onchange="syncCollectionConditionDisabledState()"
+                class="w-full px-2 py-2 bg-zinc-900 border border-zinc-800 focus:border-purple-500 rounded-xl text-xs font-mono text-white outline-none cursor-pointer"
+              >
+                <option value="RAW">Raw</option>
+                <option value="PSA9">PSA 9</option>
+                <option value="BGS95">BGS 9.5</option>
+                <option value="CGC10">CGC 10</option>
+                <option value="PSA10">PSA 10</option>
+              </select>
+            </div>
+            <div>
+              <label for="collectionCondSelect" class="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1">Condition</label>
+              <select
+                id="collectionCondSelect"
+                class="w-full px-2 py-2 bg-zinc-900 border border-zinc-800 focus:border-purple-500 rounded-xl text-xs font-mono text-white outline-none cursor-pointer disabled:opacity-40"
+              >
+                <option value="NM">NM</option>
+                <option value="LP">LP</option>
+                <option value="MP">MP</option>
+                <option value="HP">HP</option>
+                <option value="DMG">DMG</option>
+              </select>
+            </div>
+            <div>
+              <label for="collectionQtyInput" class="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1">Qty</label>
+              <input
+                id="collectionQtyInput"
+                type="number"
+                min="1"
+                max="999"
+                value="1"
+                required
+                class="w-full px-2.5 py-2 bg-zinc-900 border border-zinc-800 focus:border-purple-500 rounded-xl text-xs font-mono text-white outline-none"
+              />
+            </div>
+          </div>
+
+          <div class="sm:col-span-2 flex items-end">
+            <button
+              type="submit"
+              class="w-full py-2 px-3 rounded-xl bg-purple-600 hover:bg-purple-500 active:scale-[0.98] text-white text-xs font-extrabold shadow-lg shadow-purple-600/20 transition cursor-pointer"
+            >
+              + Track Card
+            </button>
+          </div>
+        </form>
+
+        <!-- Persistent 75% Collection Buyback Offer Banner (Visible the entire time collection has cards) -->
+        <div
+          id="collectionBuybackBanner"
+          class="hidden p-4 rounded-2xl bg-gradient-to-r from-emerald-950/60 via-zinc-950 to-purple-950/40 border border-emerald-500/40 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fade-slide"
+        >
+          <div class="space-y-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="px-2 py-0.5 text-[10px] font-mono font-extrabold uppercase tracking-wider rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                LIVE COLLECTION BUYBACK OFFER (<span id="collectionBannerPct">75%</span>)
+              </span>
+              <span id="collectionSourceBreakdown" class="text-[11px] font-mono text-zinc-400">
+                TCG: $0.00 • eBay: $0.00 • Collectr: $0.00
+              </span>
+            </div>
+            <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1 pt-0.5">
+              <div>
+                <span class="text-[11px] text-zinc-400">Real-Time Portfolio Value: </span>
+                <span id="collectionMarketTotal" class="text-sm sm:text-base font-mono font-extrabold text-white">$0.00</span>
+              </div>
+              <div>
+                <span class="text-[11px] text-emerald-300 font-semibold">Instant Cash Buyout: </span>
+                <span id="collectionBuyoutTotal" class="text-xl sm:text-2xl font-mono font-extrabold text-emerald-400">$0.00</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onclick="moveEntireCollectionToSellLot(false)"
+              class="px-3.5 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-emerald-500/40 text-emerald-300 text-xs font-extrabold transition cursor-pointer"
+            >
+              + Load into Sell Lot
+            </button>
+            <button
+              type="button"
+              onclick="moveEntireCollectionToSellLot(true)"
+              class="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-zinc-950 text-xs font-extrabold shadow-lg shadow-emerald-500/20 transition cursor-pointer"
+            >
+              Sell Entire Collection Now →
+            </button>
+          </div>
+        </div>
+
+        <!-- Collection Items List -->
+        <div id="myCollectionListContainer" class="space-y-2.5">
+          <!-- Populated dynamically by renderMyCollection() -->
+        </div>
+      </section>
+
       <!-- Active Search / Filter Results Grid (Shown when user searches, selects an Era filter, or clicks "Show All in Grid") -->
       <section id="activeResultsSection" class="hidden space-y-3">
         <div class="flex flex-wrap items-center justify-between gap-2 px-1">
@@ -1772,18 +1925,26 @@
               </div>
 
               <div class="flex items-center gap-3 shrink-0">
-                <div class="text-right font-mono">
-                  <span class="block text-[10px] text-zinc-500">Mkt: ${formatCurrency(pricing.blended)}</span>
-                  <span class="block text-xs sm:text-sm font-extrabold text-emerald-400">${formatCurrency(pricing.offer)}</span>
-                </div>
-                <button
-                  type="button"
-                  onclick="event.stopPropagation(); addToSellLot('${card.id}', globalCondition, globalGrade);"
-                  class="px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-extrabold transition cursor-pointer"
-                >
-                  + Lot
-                </button>
+              <div class="text-right font-mono">
+                <span class="block text-[10px] text-zinc-500">Mkt: ${formatCurrency(pricing.blended)}</span>
+                <span class="block text-xs sm:text-sm font-extrabold text-emerald-400">${formatCurrency(pricing.offer)}</span>
               </div>
+              <button
+                type="button"
+                onclick="event.stopPropagation(); addToMyCollection('${card.id}', globalCondition, globalGrade, 1);"
+                title="Track in My Collection"
+                class="px-2.5 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/35 text-xs font-extrabold transition cursor-pointer"
+              >
+                + Track
+              </button>
+              <button
+                type="button"
+                onclick="event.stopPropagation(); addToSellLot('${card.id}', globalCondition, globalGrade);"
+                class="px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-extrabold transition cursor-pointer"
+              >
+                + Lot
+              </button>
+            </div>
             </div>
           `;
         }).join('');
@@ -1794,15 +1955,47 @@
 
     function updatePopupHighlight() {
       document.querySelectorAll('.popup-match-row').forEach((row, idx) => {
-        row.classList.toggle('bg-zinc-900/90', idx === popupActiveIndex);
         if (idx === popupActiveIndex) {
+          row.classList.add('bg-zinc-900/90');
           row.scrollIntoView({ block: 'nearest' });
+        } else {
+          row.classList.remove('bg-zinc-900/90');
         }
       });
     }
 
     function closeSimilarPopup() {
-      document.getElementById('similarCardsPopup').classList.add('hidden');
+      const popup = document.getElementById('similarCardsPopup');
+      if (popup) popup.classList.add('hidden');
+    }
+
+    function focusCardFromPopup(cardId) {
+      const card = cardDatabase.find(c => c.id === cardId);
+      if (!card) return;
+      searchQuery = card.name;
+      const input = document.getElementById('searchInput');
+      if (input) input.value = card.name;
+      document.getElementById('clearSearchBtn').classList.remove('hidden');
+      closeSimilarPopup();
+      showCatalogGrid = true;
+      renderMainCatalogGrid();
+    }
+
+    function triggerQuickPokemonSearch(pokemonName) {
+      const input = document.getElementById('searchInput');
+      input.value = pokemonName;
+      searchQuery = pokemonName;
+      document.getElementById('clearSearchBtn').classList.remove('hidden');
+      selectedEra = 'ALL';
+      updateEraPillStyles();
+      renderSimilarPopup(pokemonName);
+      input.focus();
+    }
+
+    function applyPopupToMainGrid() {
+      closeSimilarPopup();
+      showCatalogGrid = true;
+      renderMainCatalogGrid();
     }
 
     function clearSearch() {
@@ -1820,154 +2013,118 @@
       }
     }
 
-    function triggerQuickPokemonSearch(pokemonName) {
-      const input = document.getElementById('searchInput');
-      input.value = pokemonName;
-      searchQuery = pokemonName;
-      document.getElementById('clearSearchBtn').classList.remove('hidden');
-      selectedEra = 'ALL';
-      updateEraPillStyles();
-      showCatalogGrid = true;
-      closeSimilarPopup();
-      renderMainCatalogGrid();
-    }
-
-    function focusCardFromPopup(cardId) {
-      const card = cardDatabase.find(c => c.id === cardId);
-      if (!card) return;
-      const input = document.getElementById('searchInput');
-      input.value = card.name;
-      searchQuery = card.name;
-      document.getElementById('clearSearchBtn').classList.remove('hidden');
-      selectedEra = 'ALL';
-      updateEraPillStyles();
-      showCatalogGrid = true;
-      closeSimilarPopup();
-      renderMainCatalogGrid();
-    }
-
-    function applyPopupToMainGrid() {
-      selectedEra = 'ALL';
-      updateEraPillStyles();
-      showCatalogGrid = true;
-      closeSimilarPopup();
-      renderMainCatalogGrid();
-    }
-
     // =========================================================================
     // 8. MAIN CATALOG RESULTS GRID
     // =========================================================================
     function updateEraPillStyles() {
-      document.querySelectorAll('.era-pill').forEach(btn => {
-        const isActive = btn.getAttribute('data-era') === selectedEra;
-        if (isActive) {
-          btn.className = 'era-pill active px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 text-white transition cursor-pointer';
+      document.querySelectorAll('.era-pill').forEach(pill => {
+        const era = pill.getAttribute('data-era');
+        if (era === selectedEra) {
+          pill.className = 'era-pill active px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 text-white transition cursor-pointer';
         } else {
-          btn.className = 'era-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800 transition cursor-pointer';
+          pill.className = 'era-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800 transition cursor-pointer';
         }
       });
     }
 
     function showFullCatalogGrid() {
       selectedEra = 'ALL';
-      searchQuery = '';
-      document.getElementById('searchInput').value = '';
-      document.getElementById('clearSearchBtn').classList.add('hidden');
       updateEraPillStyles();
       showCatalogGrid = true;
       renderMainCatalogGrid();
     }
 
     function resetAllFiltersToPrompt() {
-      selectedEra = 'ALL';
       searchQuery = '';
-      document.getElementById('searchInput').value = '';
+      selectedEra = 'ALL';
+      showCatalogGrid = false;
+      const input = document.getElementById('searchInput');
+      if (input) input.value = '';
       document.getElementById('clearSearchBtn').classList.add('hidden');
       updateEraPillStyles();
-      showCatalogGrid = false;
       document.getElementById('activeResultsSection').classList.add('hidden');
       document.getElementById('searchPromptSection').classList.remove('hidden');
     }
 
     function renderMainCatalogGrid() {
-      const resultsSection = document.getElementById('activeResultsSection');
+      const section = document.getElementById('activeResultsSection');
       const promptSection = document.getElementById('searchPromptSection');
-      const gridContainer = document.getElementById('cardsGridContainer');
+      const grid = document.getElementById('cardsGridContainer');
       const countBadge = document.getElementById('resultsCountBadge');
       const titleEl = document.getElementById('resultsSectionTitle');
 
-      const cards = getFilteredCards(searchQuery, selectedEra);
+      const matches = getFilteredCards(searchQuery, selectedEra);
 
       promptSection.classList.add('hidden');
-      resultsSection.classList.remove('hidden');
-      countBadge.textContent = `${cards.length} card${cards.length === 1 ? '' : 's'}`;
+      section.classList.remove('hidden');
+      countBadge.textContent = matches.length;
 
       if (searchQuery.trim()) {
-        titleEl.textContent = `Results for "${searchQuery.trim()}"`;
+        titleEl.textContent = `Search Results for "${searchQuery.trim()}"`;
       } else if (selectedEra !== 'ALL') {
         titleEl.textContent = `${selectedEra} Index`;
       } else {
-        titleEl.textContent = 'Full Buylist Index';
+        titleEl.textContent = 'Full Multi-Source Buylist Index';
       }
 
-      if (cards.length === 0) {
-        gridContainer.innerHTML = `
-          <div class="col-span-full bg-zinc-900/60 border border-zinc-800 rounded-2xl p-8 text-center space-y-3">
-            <p class="text-sm font-bold text-zinc-200">No cards found matching your filter criteria.</p>
-            <div class="flex items-center justify-center gap-2">
-              <button type="button" onclick="resetAllFiltersToPrompt()" class="px-3.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-200 cursor-pointer">Reset Filters</button>
-              <button type="button" onclick="openCustomCardModal()" class="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-xs font-bold text-white cursor-pointer">+ Add Custom Card</button>
-            </div>
+      if (matches.length === 0) {
+        grid.innerHTML = `
+          <div class="md:col-span-2 p-8 rounded-2xl bg-zinc-900/50 border border-zinc-800 text-center space-y-2.5">
+            <p class="text-sm font-bold text-zinc-200">No matching Pokémon cards found.</p>
+            <p class="text-xs text-zinc-400">Try clearing your filters or add this card directly with custom comps.</p>
+            <button
+              type="button"
+              onclick="openCustomCardModal()"
+              class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold cursor-pointer"
+            >
+              + Add Custom Card
+            </button>
           </div>
         `;
         return;
       }
 
-      gridContainer.innerHTML = cards.map(card => {
+      grid.innerHTML = matches.map(card => {
         const pricing = getAdjustedCardPricing(card, globalCondition, globalGrade, payoutRate);
         const tagLabel = globalGrade === 'RAW'
-          ? `${CONDITION_MULTIPLIERS[globalCondition].label} (Raw)`
+          ? CONDITION_MULTIPLIERS[globalCondition].label
           : GRADE_MULTIPLIERS[globalGrade].label;
 
         return `
-          <article class="bg-zinc-900/85 hover:bg-zinc-900 border border-zinc-800/90 hover:border-purple-500/40 rounded-2xl p-4 shadow-lg transition flex flex-col justify-between gap-3.5 animate-fade-slide">
-            <!-- Top Row: Card Art Badge + Title + Set -->
+          <article class="p-4 rounded-2xl bg-zinc-900/80 hover:bg-zinc-900 border border-zinc-800/90 hover:border-purple-500/40 transition flex flex-col justify-between gap-3.5 shadow-lg">
             <div class="flex items-start justify-between gap-3">
-              <div class="flex items-start gap-3 min-w-0">
-                <div class="w-12 h-14 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-center text-2xl shrink-0 holo-foil shadow-inner">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-12 h-12 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-center text-2xl shrink-0 holo-foil">
                   ${card.icon || '🃏'}
                 </div>
                 <div class="min-w-0">
-                  <div class="flex flex-wrap items-center gap-1.5">
-                    <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-purple-500/15 text-purple-300 border border-purple-500/30">
-                      ${escapeHtml(card.era)}
-                    </span>
-                    ${card.isCustom ? '<span class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">CUSTOM</span>' : ''}
-                  </div>
-                  <h4 class="text-sm sm:text-base font-extrabold text-white mt-1 leading-snug">${escapeHtml(card.name)}</h4>
-                  <p class="text-xs text-zinc-400 mt-0.5">${escapeHtml(card.set)} • <span class="font-mono text-zinc-300">#${escapeHtml(card.number)}</span></p>
+                  <span class="inline-block px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider rounded bg-zinc-950 border border-zinc-800 text-purple-300 mb-1">
+                    ${escapeHtml(card.rarity)}
+                  </span>
+                  <h4 class="text-sm font-extrabold text-white truncate">${escapeHtml(card.name)}</h4>
+                  <p class="text-xs text-zinc-400 truncate">${escapeHtml(card.set)} • #${escapeHtml(card.number)}</p>
                 </div>
               </div>
             </div>
 
-            <!-- 3-Source Market Comps Grid -->
+            <!-- 3-Source Market Breakdown -->
             <div class="grid grid-cols-3 gap-2 p-2.5 rounded-xl bg-zinc-950/90 border border-zinc-800/80 text-center font-mono">
               <div>
-                <span class="block text-[10px] uppercase text-sky-400 font-semibold">TCGPlayer</span>
+                <span class="block text-[10px] text-sky-400">TCGPlayer</span>
                 <span class="text-xs font-bold text-zinc-200">${formatCurrency(pricing.tcg)}</span>
               </div>
               <div class="border-x border-zinc-800/80">
-                <span class="block text-[10px] uppercase text-amber-400 font-semibold">eBay Sold</span>
+                <span class="block text-[10px] text-amber-400">eBay Sold</span>
                 <span class="text-xs font-bold text-zinc-200">${formatCurrency(pricing.ebay)}</span>
               </div>
               <div>
-                <span class="block text-[10px] uppercase text-purple-400 font-semibold">Collectr</span>
+                <span class="block text-[10px] text-purple-400">Collectr</span>
                 <span class="text-xs font-bold text-zinc-200">${formatCurrency(pricing.collectr)}</span>
               </div>
             </div>
 
             <!-- Blended Market & Buyout Action Footer -->
-            <div class="pt-1 flex items-center justify-between gap-2">
+            <div class="pt-1 flex flex-wrap items-center justify-between gap-2">
               <div>
                 <span class="block text-[10px] uppercase tracking-wider text-zinc-500">
                   Blended (${escapeHtml(tagLabel)}): <strong class="font-mono text-zinc-300">${formatCurrency(pricing.blended)}</strong>
@@ -1978,17 +2135,328 @@
                 </div>
               </div>
 
-              <button
-                type="button"
-                onclick="addToSellLot('${card.id}', globalCondition, globalGrade)"
-                class="px-3.5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-zinc-950 text-xs font-extrabold shadow-lg shadow-emerald-500/15 transition cursor-pointer shrink-0"
-              >
-                + Add to ${payoutRate}% Sell Lot
-              </button>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onclick="addToMyCollection('${card.id}', globalCondition, globalGrade, 1)"
+                  class="px-3 py-2.5 rounded-xl bg-purple-600/20 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/35 text-xs font-extrabold transition cursor-pointer"
+                >
+                  + Track
+                </button>
+                <button
+                  type="button"
+                  onclick="addToSellLot('${card.id}', globalCondition, globalGrade)"
+                  class="px-3.5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-zinc-950 text-xs font-extrabold shadow-lg shadow-emerald-500/15 transition cursor-pointer"
+                >
+                  + Sell Lot
+                </button>
+              </div>
             </div>
           </article>
         `;
       }).join('');
+    }
+
+    // =========================================================================
+    // 8B. MY COLLECTION & PORTFOLIO TRACKER
+    // =========================================================================
+    const STORAGE_KEY_COLLECTION = 'pokevault_my_collection_v1';
+    let myCollection = []; // { uid, cardId, condition, grade, qty }
+    let customModalAlsoAddToCollection = false;
+
+    function loadPersistedCollection() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY_COLLECTION);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            myCollection = parsed;
+          }
+        }
+      } catch (e) {}
+    }
+
+    function persistMyCollection() {
+      try {
+        localStorage.setItem(STORAGE_KEY_COLLECTION, JSON.stringify(myCollection));
+      } catch (e) {}
+    }
+
+    function populateCollectionCardSelect() {
+      const select = document.getElementById('collectionCardSelect');
+      if (!select) return;
+      const currentVal = select.value;
+      const sorted = [...cardDatabase].sort((a, b) => a.name.localeCompare(b.name));
+      select.innerHTML = sorted.map(card => {
+        const baseMkt = getAdjustedCardPricing(card, 'NM', 'RAW', payoutRate).blended;
+        return `<option value="${card.id}">${escapeHtml(card.name)} (${escapeHtml(card.set)}) — ${formatCurrency(baseMkt)}</option>`;
+      }).join('');
+      if (currentVal && sorted.some(c => c.id === currentVal)) {
+        select.value = currentVal;
+      }
+    }
+
+    function syncCollectionConditionDisabledState() {
+      const gradeEl = document.getElementById('collectionGradeSelect');
+      const condEl = document.getElementById('collectionCondSelect');
+      if (!gradeEl || !condEl) return;
+      condEl.disabled = gradeEl.value !== 'RAW';
+    }
+
+    function handleQuickAddToCollection(event) {
+      event.preventDefault();
+      const cardId = document.getElementById('collectionCardSelect').value;
+      const grade = document.getElementById('collectionGradeSelect').value;
+      const condition = document.getElementById('collectionCondSelect').value;
+      const qty = Math.max(1, parseInt(document.getElementById('collectionQtyInput').value, 10) || 1);
+
+      addToMyCollection(cardId, condition, grade, qty);
+      document.getElementById('collectionQtyInput').value = 1;
+    }
+
+    function addToMyCollection(cardId, condition = 'NM', grade = 'RAW', qty = 1) {
+      const card = cardDatabase.find(c => c.id === cardId);
+      if (!card) return;
+
+      const effectiveCond = grade === 'RAW' ? condition : 'NM';
+      const existing = myCollection.find(
+        item => item.cardId === cardId && item.condition === effectiveCond && item.grade === grade
+      );
+
+      if (existing) {
+        existing.qty += qty;
+      } else {
+        myCollection.unshift({
+          uid: 'col_' + Math.random().toString(36).slice(2, 9),
+          cardId,
+          condition: effectiveCond,
+          grade,
+          qty
+        });
+      }
+
+      persistMyCollection();
+      renderMyCollection();
+      showToast(`Added ${qty}× ${card.name} to My Collection`);
+    }
+
+    function updateCollectionItemQty(uid, delta) {
+      const idx = myCollection.findIndex(i => i.uid === uid);
+      if (idx === -1) return;
+      myCollection[idx].qty += delta;
+      if (myCollection[idx].qty <= 0) {
+        myCollection.splice(idx, 1);
+      }
+      persistMyCollection();
+      renderMyCollection();
+    }
+
+    function updateCollectionItemGrade(uid, newGrade) {
+      const item = myCollection.find(i => i.uid === uid);
+      if (!item) return;
+      item.grade = newGrade;
+      persistMyCollection();
+      renderMyCollection();
+    }
+
+    function updateCollectionItemCondition(uid, newCond) {
+      const item = myCollection.find(i => i.uid === uid);
+      if (!item) return;
+      item.condition = newCond;
+      persistMyCollection();
+      renderMyCollection();
+    }
+
+    function removeCollectionItem(uid) {
+      myCollection = myCollection.filter(i => i.uid !== uid);
+      persistMyCollection();
+      renderMyCollection();
+    }
+
+    function clearMyCollection() {
+      myCollection = [];
+      persistMyCollection();
+      renderMyCollection();
+      showToast('Collection cleared');
+    }
+
+    function moveEntireCollectionToSellLot(openCheckoutImmediately = false) {
+      if (myCollection.length === 0) return;
+
+      myCollection.forEach(colItem => {
+        const card = cardDatabase.find(c => c.id === colItem.cardId);
+        if (!card) return;
+        const effectiveCond = colItem.grade === 'RAW' ? colItem.condition : 'NM';
+        const existingLot = sellLot.find(
+          l => l.cardId === colItem.cardId && l.condition === effectiveCond && l.grade === colItem.grade
+        );
+        if (existingLot) {
+          existingLot.qty += colItem.qty;
+        } else {
+          sellLot.unshift({
+            uid: 'lot_' + Math.random().toString(36).slice(2, 9),
+            cardId: colItem.cardId,
+            condition: effectiveCond,
+            grade: colItem.grade,
+            qty: colItem.qty
+          });
+        }
+      });
+
+      persistSellLot();
+      renderSellLot();
+
+      if (openCheckoutImmediately) {
+        openQuoteModal();
+      } else {
+        showToast(`Loaded entire collection into ${payoutRate}% Sell Lot!`);
+      }
+    }
+
+    function renderMyCollection() {
+      const listContainer = document.getElementById('myCollectionListContainer');
+      const banner = document.getElementById('collectionBuybackBanner');
+      const totalBadge = document.getElementById('collectionTotalBadge');
+      const clearBtn = document.getElementById('clearCollectionBtn');
+      if (!listContainer || !banner) return;
+
+      myCollection = myCollection.filter(item => cardDatabase.some(c => c.id === item.cardId));
+
+      let totalCards = 0;
+      let tcgTotal = 0;
+      let ebayTotal = 0;
+      let collectrTotal = 0;
+      let marketTotal = 0;
+      let buyoutTotal = 0;
+
+      if (myCollection.length === 0) {
+        banner.classList.add('hidden');
+        if (clearBtn) clearBtn.classList.add('hidden');
+        totalBadge.textContent = '0 cards';
+        listContainer.innerHTML = `
+          <div class="p-6 rounded-xl bg-zinc-950/60 border border-dashed border-zinc-800 text-center space-y-1.5">
+            <p class="text-xs sm:text-sm font-bold text-zinc-300">Your Collection Tracker is Empty</p>
+            <p class="text-xs text-zinc-500 max-w-md mx-auto">
+              Select any Pokémon card above (or click <span class="text-purple-300 font-semibold">+ Track</span> on any search result) to monitor real-time market value and unlock an instant <span class="text-emerald-400 font-semibold">${payoutRate}% collection buyback offer</span>.
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      if (clearBtn) clearBtn.classList.remove('hidden');
+
+      const itemsHtml = myCollection.map(item => {
+        const card = cardDatabase.find(c => c.id === item.cardId);
+        if (!card) return '';
+        const pricing = getAdjustedCardPricing(card, item.condition, item.grade, payoutRate);
+
+        const lineTcg = pricing.tcg * item.qty;
+        const lineEbay = pricing.ebay * item.qty;
+        const lineCollectr = pricing.collectr * item.qty;
+        const lineMarket = pricing.blended * item.qty;
+        const lineOffer = pricing.offer * item.qty;
+
+        totalCards += item.qty;
+        tcgTotal += lineTcg;
+        ebayTotal += lineEbay;
+        collectrTotal += lineCollectr;
+        marketTotal += lineMarket;
+        buyoutTotal += lineOffer;
+
+        const condOptions = Object.entries(CONDITION_MULTIPLIERS).map(([key, obj]) =>
+          `<option value="${key}" ${item.condition === key ? 'selected' : ''}>${obj.short}</option>`
+        ).join('');
+
+        const gradeOptions = Object.entries(GRADE_MULTIPLIERS).map(([key, obj]) =>
+          `<option value="${key}" ${item.grade === key ? 'selected' : ''}>${obj.short}</option>`
+        ).join('');
+
+        return `
+          <div class="p-3 sm:p-3.5 rounded-xl bg-zinc-950/90 border border-zinc-800/90 hover:border-purple-500/35 transition flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <!-- Left: Card Info -->
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-lg shrink-0 holo-foil">
+                ${card.icon || '🃏'}
+              </div>
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span class="text-xs sm:text-sm font-extrabold text-white truncate">${escapeHtml(card.name)}</span>
+                  <span class="text-[11px] font-mono text-zinc-400">${escapeHtml(card.set)} #${escapeHtml(card.number)}</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 mt-1 text-[11px] font-mono text-zinc-500">
+                  <span class="text-sky-400/90">TCG: ${formatCurrency(lineTcg)}</span>
+                  <span>•</span>
+                  <span class="text-amber-400/90">eBay: ${formatCurrency(lineEbay)}</span>
+                  <span>•</span>
+                  <span class="text-purple-400/90">Collectr: ${formatCurrency(lineCollectr)}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Grade/Cond/Qty Controls + Market & 75% Offer + Actions -->
+            <div class="flex flex-wrap items-center justify-between md:justify-end gap-2.5 pt-2 md:pt-0 border-t md:border-t-0 border-zinc-800/70 shrink-0">
+              <div class="flex items-center gap-1.5">
+                <select
+                  aria-label="Collection Item Grade"
+                  onchange="updateCollectionItemGrade('${item.uid}', this.value)"
+                  class="px-2 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-200 outline-none cursor-pointer"
+                >
+                  ${gradeOptions}
+                </select>
+                <select
+                  aria-label="Collection Item Condition"
+                  ${item.grade !== 'RAW' ? 'disabled' : ''}
+                  onchange="updateCollectionItemCondition('${item.uid}', this.value)"
+                  class="px-2 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-200 outline-none cursor-pointer disabled:opacity-40"
+                >
+                  ${condOptions}
+                </select>
+                <div class="flex items-center gap-1 bg-zinc-900 border border-zinc-800 rounded-lg px-1 py-0.5">
+                  <button type="button" onclick="updateCollectionItemQty('${item.uid}', -1)" class="w-5 h-5 rounded hover:bg-zinc-800 text-zinc-300 text-xs font-bold cursor-pointer">−</button>
+                  <span class="px-1.5 text-xs font-mono font-bold text-white">${item.qty}</span>
+                  <button type="button" onclick="updateCollectionItemQty('${item.uid}', 1)" class="w-5 h-5 rounded hover:bg-zinc-800 text-zinc-300 text-xs font-bold cursor-pointer">+</button>
+                </div>
+              </div>
+
+              <div class="text-right font-mono min-w-[115px]">
+                <span class="block text-[10px] text-zinc-400">Mkt: <strong class="text-white">${formatCurrency(lineMarket)}</strong></span>
+                <span class="block text-xs font-extrabold text-emerald-400">${payoutRate}%: ${formatCurrency(lineOffer)}</span>
+              </div>
+
+              <div class="flex items-center gap-1">
+                <button
+                  type="button"
+                  onclick="addToSellLot('${card.id}', '${item.condition}', '${item.grade}')"
+                  title="Add 1 copy to Sell Lot"
+                  class="px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500 text-emerald-300 hover:text-zinc-950 border border-emerald-500/35 text-[11px] font-extrabold transition cursor-pointer"
+                >
+                  + Lot
+                </button>
+                <button
+                  type="button"
+                  onclick="removeCollectionItem('${item.uid}')"
+                  title="Remove from collection"
+                  class="w-7 h-7 rounded-lg bg-zinc-900 hover:bg-rose-950/60 text-zinc-500 hover:text-rose-400 flex items-center justify-center text-xs transition cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      listContainer.innerHTML = itemsHtml;
+
+      // Update Persistent Buyback Offer Banner
+      totalBadge.textContent = `${totalCards} card${totalCards === 1 ? '' : 's'}`;
+      document.getElementById('collectionBannerPct').textContent = `${payoutRate}%`;
+      document.getElementById('collectionSourceBreakdown').textContent =
+        `TCG: ${formatCurrency(tcgTotal)} • eBay: ${formatCurrency(ebayTotal)} • Collectr: ${formatCurrency(collectrTotal)}`;
+      document.getElementById('collectionMarketTotal').textContent = formatCurrency(marketTotal);
+      document.getElementById('collectionBuyoutTotal').textContent = formatCurrency(buyoutTotal);
+      banner.classList.remove('hidden');
     }
 
     // =========================================================================
@@ -2201,7 +2669,8 @@
     // =========================================================================
     // 11. CUSTOM CARD MODAL
     // =========================================================================
-    function openCustomCardModal() {
+    function openCustomCardModal(alsoTrackInCollection = false) {
+      customModalAlsoAddToCollection = Boolean(alsoTrackInCollection);
       const modal = document.getElementById('customCardModal');
       modal.classList.remove('hidden');
       modal.classList.add('flex');
@@ -2267,12 +2736,17 @@
 
       cardDatabase.unshift(newCard);
       persistCustomCards();
+      populateCollectionCardSelect();
       closeCustomCardModal();
       document.getElementById('customCardForm').reset();
 
+      if (customModalAlsoAddToCollection) {
+        addToMyCollection(newCard.id, cond, grade, 1);
+      }
+
       if (addToLot) {
         addToSellLot(newCard.id, cond, grade);
-      } else {
+      } else if (!customModalAlsoAddToCollection) {
         showToast(`Added "${name}" to Buylist Index`);
       }
 
@@ -3071,23 +3545,29 @@
     // =========================================================================
     window.addEventListener('DOMContentLoaded', () => {
       loadPersistedState();
+      loadPersistedCollection();
       parseUrlQueryParams();
 
       // Sync initial UI values
+      populateCollectionCardSelect();
       setPayoutRate(payoutRate);
       renderRecentSalesPanel();
       startRecentSalesRotation();
+      renderMyCollection();
       renderSellLot();
 
       // Payout Sliders & Reset Button
       document.getElementById('globalPayoutSlider').addEventListener('input', (e) => {
         setPayoutRate(e.target.value);
+        renderMyCollection();
       });
       document.getElementById('mobilePayoutSlider').addEventListener('input', (e) => {
         setPayoutRate(e.target.value);
+        renderMyCollection();
       });
       document.getElementById('reset75Btn').addEventListener('click', () => {
         setPayoutRate(75);
+        renderMyCollection();
         showToast('Buyout rate reset to 75%');
       });
 
