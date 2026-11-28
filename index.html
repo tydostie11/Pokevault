@@ -33,11 +33,36 @@
     }
   </script>
   <style>
+    html, body {
+      max-width: 100%;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     body {
       background-color: #09090b;
       color: #f4f4f5;
       font-family: 'Inter', sans-serif;
-      overflow-x: hidden;
+    }
+
+    /* Prevent iOS Safari automatic zoom on form inputs */
+    @media (max-width: 640px) {
+      input[type="text"],
+      input[type="number"],
+      input[type="password"],
+      select,
+      textarea {
+        font-size: 16px !important;
+      }
+    }
+
+    /* Hide scrollbars on horizontal chip scrollers while preserving touch swipe */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
     }
 
     /* Subtle holographic shimmer for card previews */
@@ -95,15 +120,16 @@
     input[type=range] {
       -webkit-appearance: none;
       background: transparent;
+      touch-action: pan-y;
     }
     input[type=range]::-webkit-slider-thumb {
       -webkit-appearance: none;
-      height: 18px;
-      width: 18px;
+      height: 22px;
+      width: 22px;
       border-radius: 50%;
       background: #10b981;
       cursor: pointer;
-      margin-top: -6px;
+      margin-top: -8px;
       box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
       border: 2px solid #ffffff;
     }
@@ -116,33 +142,33 @@
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased selection:bg-emerald-500/30 selection:text-emerald-200">
+<body class="min-h-screen flex flex-col antialiased selection:bg-emerald-500/30 selection:text-emerald-200 pb-24 lg:pb-0">
 
-  <!-- Toast Notification Banner -->
-  <div id="toastContainer" class="fixed bottom-5 right-5 z-[60] flex flex-col gap-2 pointer-events-none"></div>
+  <!-- Toast Notification Banner (Positioned above mobile bottom bar on phones) -->
+  <div id="toastContainer" class="fixed bottom-24 lg:bottom-5 left-4 right-4 sm:left-auto sm:right-5 z-[60] flex flex-col items-center sm:items-end gap-2 pointer-events-none"></div>
 
   <!-- Top Navigation Header -->
   <header class="sticky top-0 z-40 bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800/80">
-    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+    <div class="max-w-[1600px] mx-auto px-3.5 sm:px-6 py-3 flex items-center justify-between gap-2.5 sm:gap-4">
       <!-- Brand Identity -->
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 via-indigo-600 to-emerald-500 p-[1.5px] shadow-lg shadow-purple-500/20">
+      <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-purple-600 via-indigo-600 to-emerald-500 p-[1.5px] shadow-lg shadow-purple-500/20 shrink-0">
           <div class="w-full h-full bg-zinc-950 rounded-[10px] flex items-center justify-center">
             <!-- Custom Pokeball / Ghost Radar SVG -->
-            <svg class="w-6 h-6 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="9" class="text-purple-400" />
               <path d="M3 12h6m6 0h6" />
               <circle cx="12" cy="12" r="3" class="text-emerald-400 fill-emerald-400/20" />
             </svg>
           </div>
         </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-lg sm:text-xl font-extrabold tracking-tight text-white">
+        <div class="min-w-0">
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <h1 class="text-base sm:text-xl font-extrabold tracking-tight text-white truncate">
               POKÉ<span class="text-purple-400">VAULT</span>
             </h1>
-            <span id="headerLiveBadge" class="px-2 py-0.5 text-[11px] font-mono font-bold uppercase tracking-wider rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-              75% BUYLIST LIVE
+            <span id="headerLiveBadge" class="px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-[11px] font-mono font-bold uppercase tracking-wider rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0">
+              75% LIVE
             </span>
           </div>
           <p class="text-xs text-zinc-400 hidden sm:block">Multi-Source Index: TCGPlayer • eBay Last Sold • Collectr</p>
@@ -150,7 +176,7 @@
       </div>
 
       <!-- Global Payout Rate & Quick Add Custom Card -->
-      <div class="flex items-center gap-2.5 sm:gap-4">
+      <div class="flex items-center gap-2 sm:gap-3 shrink-0">
         <!-- Payout Percentage Control Pill -->
         <div class="hidden md:flex items-center gap-3 bg-zinc-900/90 border border-zinc-800 px-3.5 py-2 rounded-xl">
           <div class="flex flex-col">
@@ -181,21 +207,24 @@
         <button
           type="button"
           onclick="openCustomCardModal()"
-          class="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 active:scale-[0.98] text-white text-xs sm:text-sm font-semibold shadow-lg shadow-purple-600/20 transition cursor-pointer"
+          aria-label="Add Custom Card"
+          class="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 active:scale-[0.98] text-white text-xs sm:text-sm font-semibold shadow-lg shadow-purple-600/20 transition cursor-pointer"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
           </svg>
-          <span>Add Custom Card</span>
+          <span class="hidden xs:inline sm:inline">Custom</span>
+          <span class="hidden sm:inline">Card</span>
         </button>
 
         <!-- Share Link Modal Trigger -->
         <button
           type="button"
           onclick="openShareModal()"
-          class="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-700/80 text-zinc-100 text-xs sm:text-sm font-semibold transition cursor-pointer"
+          aria-label="Share Link"
+          class="flex items-center gap-2 p-2.5 sm:px-3.5 sm:py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-700/80 text-zinc-100 text-xs sm:text-sm font-semibold transition cursor-pointer"
         >
-          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
           </svg>
           <span class="hidden sm:inline">Share Link</span>
@@ -205,9 +234,10 @@
         <button
           type="button"
           onclick="toggleMobileLot()"
-          class="lg:hidden relative flex items-center gap-2 px-3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-bold text-xs shadow-lg shadow-emerald-500/20 cursor-pointer"
+          aria-label="Open Sell Lot Drawer"
+          class="lg:hidden relative flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-zinc-950 font-extrabold text-xs shadow-lg shadow-emerald-500/20 cursor-pointer"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
           <span id="mobileLotCountBadge">0</span>
@@ -217,14 +247,14 @@
   </header>
 
   <!-- Main Workspace -->
-  <div class="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+  <div class="flex-1 max-w-[1600px] w-full mx-auto px-3.5 sm:px-6 py-4 sm:py-6 grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start">
 
     <!-- Left & Center Column: Search, Filters, Recent Sales & Results (8 cols on desktop) -->
-    <main class="lg:col-span-8 flex flex-col gap-5">
+    <main class="lg:col-span-8 flex flex-col gap-4 sm:gap-5 min-w-0">
 
       <!-- Search & Global Controls Bar -->
-      <div class="bg-zinc-900/70 border border-zinc-800/90 rounded-2xl p-4 shadow-xl relative z-30">
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+      <div class="bg-zinc-900/70 border border-zinc-800/90 rounded-2xl p-3.5 sm:p-4 shadow-xl relative z-30">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 sm:gap-3">
           <!-- Search Input & Smart Similar Cards Autocomplete Popup -->
           <div id="searchAutocompleteWrapper" class="md:col-span-6 relative">
             <svg class="w-4 h-4 text-purple-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -234,7 +264,7 @@
               id="searchInput"
               type="text"
               autocomplete="off"
-              placeholder="Type Pokémon name (e.g. Gengar, Umbreon, Charizard, Pikachu)..."
+              placeholder="Search Pokémon (e.g. Gengar, Umbreon)..."
               class="w-full pl-10 pr-16 py-2.5 bg-zinc-950 border border-zinc-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-xl text-sm text-white placeholder-zinc-500 outline-none transition"
             />
             <div class="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
@@ -243,88 +273,92 @@
                 type="button"
                 onclick="clearSearch()"
                 title="Clear search"
-                class="hidden px-1.5 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white text-xs transition cursor-pointer"
+                class="hidden px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white text-xs transition cursor-pointer"
               >
                 ✕
               </button>
               <span class="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono text-zinc-500 bg-zinc-900 border border-zinc-800 rounded">ESC</span>
             </div>
 
-            <!-- Floating Smart Similar Cards & Evolution Line Popup -->
+            <!-- Floating Smart Similar Cards & Evolution Line Popup (Constrained to viewport width on mobile) -->
             <div
               id="similarCardsPopup"
-              class="hidden absolute left-0 right-0 sm:-right-32 lg:-right-48 top-[calc(100%+8px)] bg-zinc-950/98 backdrop-blur-xl border border-purple-500/45 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] overflow-hidden z-50"
+              class="hidden absolute left-0 right-0 md:-right-32 lg:-right-48 top-[calc(100%+8px)] w-full md:w-auto bg-zinc-950/98 backdrop-blur-xl border border-purple-500/45 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] overflow-hidden z-50"
             >
               <!-- Popup Header -->
-              <div class="px-4 py-2.5 bg-gradient-to-r from-purple-950/70 via-zinc-900 to-emerald-950/40 border-b border-zinc-800/90 flex items-center justify-between gap-2">
+              <div class="px-3.5 sm:px-4 py-2.5 bg-gradient-to-r from-purple-950/70 via-zinc-900 to-emerald-950/40 border-b border-zinc-800/90 flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2 min-w-0">
                   <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse shrink-0"></span>
                   <span id="popupHeaderTitle" class="text-xs font-bold text-white truncate">Similar & Related Pokémon Matches</span>
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
                   <span id="popupMatchCount" class="text-[11px] font-mono text-purple-300 bg-purple-500/15 px-2 py-0.5 rounded-md border border-purple-500/30">0 found</span>
-                  <button type="button" onclick="closeSimilarPopup()" class="text-zinc-400 hover:text-white text-xs px-1.5 py-0.5 rounded hover:bg-zinc-800 cursor-pointer">✕</button>
+                  <button type="button" onclick="closeSimilarPopup()" class="text-zinc-400 hover:text-white text-xs p-1.5 rounded hover:bg-zinc-800 cursor-pointer">✕</button>
                 </div>
               </div>
 
               <!-- Quick Pokémon Family Chips inside Popup -->
-              <div class="px-3.5 py-2 bg-zinc-900/60 border-b border-zinc-800/70 flex items-center gap-1.5 overflow-x-auto">
-                <span class="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 shrink-0">Quick Jump:</span>
-                <button type="button" onclick="triggerQuickPokemonSearch('Gengar')" class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-purple-500/15 text-purple-300 hover:bg-purple-500/30 border border-purple-500/30 shrink-0 cursor-pointer">Gengar Line</button>
-                <button type="button" onclick="triggerQuickPokemonSearch('Umbreon')" class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 shrink-0 cursor-pointer">Umbreon / Eevee</button>
-                <button type="button" onclick="triggerQuickPokemonSearch('Charizard')" class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 shrink-0 cursor-pointer">Charizard</button>
-                <button type="button" onclick="triggerQuickPokemonSearch('Pikachu')" class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 shrink-0 cursor-pointer">Pikachu</button>
-                <button type="button" onclick="triggerQuickPokemonSearch('Mew')" class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 shrink-0 cursor-pointer">Mew / Mewtwo</button>
-                <button type="button" onclick="triggerQuickPokemonSearch('Rayquaza')" class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 shrink-0 cursor-pointer">Rayquaza</button>
+              <div class="px-3.5 py-2 bg-zinc-900/60 border-b border-zinc-800/70 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                <span class="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 shrink-0">Quick:</span>
+                <button type="button" onclick="triggerQuickPokemonSearch('Gengar')" class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-purple-500/15 text-purple-300 hover:bg-purple-500/30 border border-purple-500/30 shrink-0 cursor-pointer">Gengar Line</button>
+                <button type="button" onclick="triggerQuickPokemonSearch('Umbreon')" class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 shrink-0 cursor-pointer">Umbreon / Eevee</button>
+                <button type="button" onclick="triggerQuickPokemonSearch('Charizard')" class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 shrink-0 cursor-pointer">Charizard</button>
+                <button type="button" onclick="triggerQuickPokemonSearch('Pikachu')" class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 shrink-0 cursor-pointer">Pikachu</button>
+                <button type="button" onclick="triggerQuickPokemonSearch('Mew')" class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 shrink-0 cursor-pointer">Mew / Mewtwo</button>
+                <button type="button" onclick="triggerQuickPokemonSearch('Rayquaza')" class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 shrink-0 cursor-pointer">Rayquaza</button>
               </div>
 
               <!-- Scrollable Suggestions List -->
-              <div id="similarCardsPopupBody" class="max-h-[400px] overflow-y-auto divide-y divide-zinc-800/60">
+              <div id="similarCardsPopupBody" class="max-h-[55vh] sm:max-h-[400px] overflow-y-auto divide-y divide-zinc-800/60">
                 <!-- Populated dynamically -->
               </div>
 
               <!-- Popup Footer -->
-              <div class="px-4 py-2 bg-zinc-900/90 border-t border-zinc-800 flex items-center justify-between text-[11px] text-zinc-400">
-                <span>Use <kbd class="px-1 py-0.2 bg-zinc-800 rounded text-zinc-300 font-mono">↑</kbd> <kbd class="px-1 py-0.2 bg-zinc-800 rounded text-zinc-300 font-mono">↓</kbd> to navigate, <kbd class="px-1 py-0.2 bg-zinc-800 rounded text-zinc-300 font-mono">Enter</kbd> to focus</span>
-                <button type="button" onclick="applyPopupToMainGrid()" class="text-purple-400 hover:text-purple-300 font-semibold cursor-pointer">Show All in Grid →</button>
+              <div class="px-3.5 sm:px-4 py-2.5 bg-zinc-900/90 border-t border-zinc-800 flex items-center justify-between text-[11px] text-zinc-400">
+                <span class="hidden sm:inline">Use <kbd class="px-1 py-0.2 bg-zinc-800 rounded text-zinc-300 font-mono">↑</kbd> <kbd class="px-1 py-0.2 bg-zinc-800 rounded text-zinc-300 font-mono">↓</kbd> to navigate, <kbd class="px-1 py-0.2 bg-zinc-800 rounded text-zinc-300 font-mono">Enter</kbd> to focus</span>
+                <span class="sm:hidden">Tap any card to inspect</span>
+                <button type="button" onclick="applyPopupToMainGrid()" class="text-purple-400 hover:text-purple-300 font-semibold cursor-pointer py-1">Show All in Grid →</button>
               </div>
             </div>
           </div>
 
-          <!-- Global Default Condition Selector -->
-          <div class="md:col-span-3">
-            <select
-              id="globalConditionSelect"
-              aria-label="Global Condition Filter"
-              class="w-full px-3 py-2.5 bg-zinc-950 border border-zinc-800 focus:border-purple-500 rounded-xl text-xs sm:text-sm text-zinc-200 outline-none cursor-pointer"
-            >
-              <option value="NM">Condition: Near Mint (100%)</option>
-              <option value="LP">Condition: Lightly Played (85%)</option>
-              <option value="MP">Condition: Mod. Played (70%)</option>
-              <option value="HP">Condition: Heavily Played (50%)</option>
-              <option value="DMG">Condition: Damaged (35%)</option>
-            </select>
-          </div>
+          <!-- Condition & Grade Selectors (Side-by-side 2-column grid on mobile phones) -->
+          <div class="grid grid-cols-2 md:contents gap-2">
+            <!-- Global Default Condition Selector -->
+            <div class="md:col-span-3">
+              <select
+                id="globalConditionSelect"
+                aria-label="Global Condition Filter"
+                class="w-full px-2.5 sm:px-3 py-2.5 bg-zinc-950 border border-zinc-800 focus:border-purple-500 rounded-xl text-xs sm:text-sm text-zinc-200 outline-none cursor-pointer"
+              >
+                <option value="NM">Cond: Near Mint (100%)</option>
+                <option value="LP">Cond: Lightly Played (85%)</option>
+                <option value="MP">Cond: Mod. Played (70%)</option>
+                <option value="HP">Cond: Heavily Played (50%)</option>
+                <option value="DMG">Cond: Damaged (35%)</option>
+              </select>
+            </div>
 
-          <!-- Global Default Grade Selector -->
-          <div class="md:col-span-3">
-            <select
-              id="globalGradeSelect"
-              aria-label="Global Grade Filter"
-              class="w-full px-3 py-2.5 bg-zinc-950 border border-zinc-800 focus:border-purple-500 rounded-xl text-xs sm:text-sm text-zinc-200 outline-none cursor-pointer"
-            >
-              <option value="RAW">Grade: Raw / Ungraded (1.0x)</option>
-              <option value="PSA9">Slab: PSA 9 Mint (1.45x)</option>
-              <option value="BGS95">Slab: BGS 9.5 Gem Mint (1.85x)</option>
-              <option value="CGC10">Slab: CGC 10 Pristine (2.20x)</option>
-              <option value="PSA10">Slab: PSA 10 Gem Mint (2.60x)</option>
-            </select>
+            <!-- Global Default Grade Selector -->
+            <div class="md:col-span-3">
+              <select
+                id="globalGradeSelect"
+                aria-label="Global Grade Filter"
+                class="w-full px-2.5 sm:px-3 py-2.5 bg-zinc-950 border border-zinc-800 focus:border-purple-500 rounded-xl text-xs sm:text-sm text-zinc-200 outline-none cursor-pointer"
+              >
+                <option value="RAW">Grade: Raw (1.0x)</option>
+                <option value="PSA9">Slab: PSA 9 (1.45x)</option>
+                <option value="BGS95">Slab: BGS 9.5 (1.85x)</option>
+                <option value="CGC10">Slab: CGC 10 (2.20x)</option>
+                <option value="PSA10">Slab: PSA 10 (2.60x)</option>
+              </select>
+            </div>
           </div>
         </div>
 
         <!-- Mobile Payout Slider (visible on < md) -->
         <div class="mt-3 pt-3 border-t border-zinc-800/80 flex md:hidden items-center justify-between gap-3">
-          <span class="text-xs text-zinc-400 font-medium">Instant Buyout %: <strong id="mobilePayoutLabel" class="text-emerald-400 font-mono">75%</strong></span>
+          <span class="text-xs text-zinc-400 font-medium shrink-0">Buyout %: <strong id="mobilePayoutLabel" class="text-emerald-400 font-mono">75%</strong></span>
           <input
             id="mobilePayoutSlider"
             type="range"
@@ -332,23 +366,30 @@
             max="90"
             step="1"
             value="75"
-            class="w-36"
+            class="flex-1 max-w-[180px]"
           />
+          <button
+            type="button"
+            onclick="setPayoutRate(75); renderMyCollection(); showToast('Buyout rate reset to 75%');"
+            class="px-2 py-1 rounded-md bg-zinc-800 text-[11px] font-mono text-zinc-300 shrink-0"
+          >
+            75%
+          </button>
         </div>
 
-        <!-- Era / Category Filter Pills & Sort -->
-        <div class="mt-3.5 pt-3 border-t border-zinc-800/70 flex flex-wrap items-center justify-between gap-3">
-          <div id="eraFilterContainer" class="flex flex-wrap items-center gap-1.5">
-            <button type="button" data-era="ALL" class="era-pill active px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 text-white transition cursor-pointer">All Cards</button>
-            <button type="button" data-era="Gengar Line" class="era-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800 transition cursor-pointer">👻 Gengar / Gastly Line</button>
-            <button type="button" data-era="Sword & Shield" class="era-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800 transition cursor-pointer">Modern Alt Arts / SIRs</button>
-            <button type="button" data-era="WOTC Vintage" class="era-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800 transition cursor-pointer">WOTC Vintage</button>
-            <button type="button" data-era="Sun & Moon / Promo" class="era-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800 transition cursor-pointer">Sun & Moon / Promos</button>
+        <!-- Era / Category Filter Pills & Sort (Horizontal swipeable pills on mobile) -->
+        <div class="mt-3 pt-3 border-t border-zinc-800/70 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div id="eraFilterContainer" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5 sm:pb-0 sm:flex-wrap">
+            <button type="button" data-era="ALL" class="era-pill active px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 text-white transition cursor-pointer shrink-0">All Cards</button>
+            <button type="button" data-era="Gengar Line" class="era-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800 transition cursor-pointer shrink-0">👻 Gengar Line</button>
+            <button type="button" data-era="Sword & Shield" class="era-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800 transition cursor-pointer shrink-0">Modern Alt Arts</button>
+            <button type="button" data-era="WOTC Vintage" class="era-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800 transition cursor-pointer shrink-0">WOTC Vintage</button>
+            <button type="button" data-era="Sun & Moon / Promo" class="era-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800 transition cursor-pointer shrink-0">Sun & Moon / Promos</button>
           </div>
 
-          <div class="flex items-center gap-2">
+          <div class="flex items-center justify-end gap-2 shrink-0">
             <span class="text-xs text-zinc-500">Sort:</span>
-            <select id="sortSelect" class="bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1 text-xs text-zinc-300 outline-none cursor-pointer">
+            <select id="sortSelect" class="bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-zinc-300 outline-none cursor-pointer">
               <option value="value-desc">Highest Value</option>
               <option value="value-asc">Lowest Value</option>
               <option value="name-asc">Name (A-Z)</option>
@@ -373,7 +414,7 @@
               type="button"
               onclick="stepRecentSales(-1)"
               title="Previous recent sale"
-              class="px-2 py-1 rounded-lg bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs font-mono transition cursor-pointer"
+              class="px-2.5 py-1.5 rounded-lg bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs font-mono transition cursor-pointer"
             >
               ‹
             </button>
@@ -382,7 +423,7 @@
               type="button"
               onclick="toggleRecentSalesRotation()"
               title="Pause or resume rotation"
-              class="px-2.5 py-1 rounded-lg bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-[11px] font-mono transition cursor-pointer"
+              class="px-2.5 py-1.5 rounded-lg bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-[11px] font-mono transition cursor-pointer"
             >
               Pause
             </button>
@@ -390,7 +431,7 @@
               type="button"
               onclick="stepRecentSales(1)"
               title="Next recent sale"
-              class="px-2 py-1 rounded-lg bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs font-mono transition cursor-pointer"
+              class="px-2.5 py-1.5 rounded-lg bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs font-mono transition cursor-pointer"
             >
               ›
             </button>
@@ -409,30 +450,22 @@
         </div>
       </section>
 
-      <!-- My Collection & Portfolio Tracker (Real-Time Market + Persistent 75% Buyback Offer) -->
-      <section id="myCollectionSection" aria-label="My Collection Tracker" class="bg-zinc-900/80 border border-zinc-800/90 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
-        <!-- Section Header -->
-        <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-zinc-800/80">
-          <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-xl bg-purple-500/15 border border-purple-500/35 flex items-center justify-center text-purple-300 text-base">
-              🗂️
-            </div>
-            <div>
-              <div class="flex items-center gap-2">
-                <h2 class="text-sm sm:text-base font-extrabold text-white tracking-tight">My Collection & Portfolio Tracker</h2>
-                <span id="collectionTotalBadge" class="px-2 py-0.5 text-[11px] font-mono font-bold rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                  0 cards
-                </span>
-              </div>
-              <p class="text-xs text-zinc-400">Input your binder or slabs to track real-time market value & live <span class="promptRateText">75%</span> buyout</p>
-            </div>
+      <!-- My Collection & Portfolio Tracker -->
+      <section aria-label="My Collection Tracker" class="bg-zinc-900/75 border border-zinc-800/90 rounded-2xl p-3.5 sm:p-4 shadow-xl space-y-3.5">
+        <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-zinc-800/80">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+            <h2 class="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-white">My Collection & Portfolio Tracker</h2>
+            <span id="collectionTotalBadge" class="px-2 py-0.5 text-[10px] font-mono font-bold rounded-md bg-purple-500/15 border border-purple-500/30 text-purple-300">
+              0 cards
+            </span>
           </div>
 
           <div class="flex items-center gap-2">
             <button
               type="button"
               onclick="openCustomCardModal(true)"
-              class="px-3 py-1.5 rounded-xl bg-zinc-950 hover:bg-zinc-800 border border-zinc-700/80 text-xs font-semibold text-zinc-200 transition cursor-pointer"
+              class="px-2.5 py-1.5 rounded-lg bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-purple-300 text-[11px] font-bold transition cursor-pointer"
             >
               + Custom Entry
             </button>
@@ -440,15 +473,15 @@
               id="clearCollectionBtn"
               type="button"
               onclick="clearMyCollection()"
-              class="hidden px-2.5 py-1.5 rounded-xl bg-zinc-950 hover:bg-rose-950/50 border border-zinc-800 hover:border-rose-500/40 text-xs font-semibold text-zinc-400 hover:text-rose-300 transition cursor-pointer"
+              class="hidden px-2.5 py-1.5 rounded-lg bg-zinc-950 hover:bg-rose-950/60 border border-zinc-800 text-zinc-400 hover:text-rose-400 text-[11px] font-semibold transition cursor-pointer"
             >
               Clear
             </button>
           </div>
         </div>
 
-        <!-- Quick Collection Input Bar -->
-        <form onsubmit="handleQuickAddToCollection(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 p-3 rounded-xl bg-zinc-950/90 border border-zinc-800/90">
+        <!-- Quick Collection Input Form -->
+        <form onsubmit="handleQuickAddToCollection(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 p-3 rounded-xl bg-zinc-950/80 border border-zinc-800/80">
           <div class="sm:col-span-5">
             <label for="collectionCardSelect" class="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1">Select Card from Index</label>
             <select
@@ -854,11 +887,11 @@
   </div>
 
   <!-- Execute 75% Sell Offer & Quote Receipt Modal -->
-  <div id="quoteModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+  <div id="quoteModal" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="absolute inset-0 bg-black/85 backdrop-blur-sm" onclick="closeQuoteModal()"></div>
-    <div class="relative w-full max-w-2xl bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col">
+    <div class="relative w-full max-w-2xl bg-zinc-900 border-t sm:border border-zinc-800 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[94vh] sm:max-h-[92vh] flex flex-col">
       <!-- Header -->
-      <div class="p-5 bg-gradient-to-r from-zinc-900 via-zinc-900 to-emerald-950/40 border-b border-zinc-800 flex items-center justify-between shrink-0">
+      <div class="p-4 sm:p-5 bg-gradient-to-r from-zinc-900 via-zinc-900 to-emerald-950/40 border-b border-zinc-800 flex items-center justify-between shrink-0">
         <div>
           <div class="flex items-center gap-2">
             <span id="quoteStatusBadge" class="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">LOCKED BUYLIST QUOTE</span>
@@ -1011,10 +1044,10 @@
   </div>
 
   <!-- Share Link & Lot Summary Modal -->
-  <div id="shareModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+  <div id="shareModal" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeShareModal()"></div>
-    <div class="relative w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden">
-      <div class="p-5 border-b border-zinc-800 flex items-center justify-between">
+    <div class="relative w-full max-w-lg bg-zinc-900 border-t sm:border border-zinc-800 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col">
+      <div class="p-4 sm:p-5 border-b border-zinc-800 flex items-center justify-between shrink-0">
         <div>
           <h3 class="text-lg font-extrabold text-white">Share Valuation & Sell Lot</h3>
           <p class="text-xs text-zinc-400">Send a live link or text summary of your current buylist lot</p>
@@ -1707,7 +1740,7 @@
       persistPayoutRate();
 
       // Update header, mobile, sidebar & prompt badges
-      document.getElementById('headerLiveBadge').textContent = `${payoutRate}% BUYLIST LIVE`;
+      document.getElementById('headerLiveBadge').textContent = `${payoutRate}% LIVE`;
       document.getElementById('headerPayoutBadge').textContent = `${payoutRate}% Cash`;
       document.getElementById('globalPayoutSlider').value = payoutRate;
       document.getElementById('mobilePayoutLabel').textContent = `${payoutRate}%`;
@@ -1716,6 +1749,8 @@
       document.getElementById('payoutBoxPct').textContent = `${payoutRate}%`;
       document.getElementById('executeBtnPct').textContent = `${payoutRate}%`;
       document.getElementById('mobileDrawerPct').textContent = `${payoutRate}%`;
+      const mobileBarPct = document.getElementById('mobileBarPct');
+      if (mobileBarPct) mobileBarPct.textContent = `${payoutRate}%`;
 
       document.querySelectorAll('.promptRateText').forEach(el => {
         el.textContent = `${payoutRate}%`;
@@ -1906,16 +1941,16 @@
           return `
             <div
               data-popup-idx="${idx}"
-              class="popup-match-row px-4 py-3 hover:bg-zinc-900/90 transition flex items-center justify-between gap-3 cursor-pointer ${
+              class="popup-match-row px-3.5 sm:px-4 py-3 hover:bg-zinc-900/90 transition flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 cursor-pointer ${
                 idx === popupActiveIndex ? 'bg-zinc-900/90' : ''
               }"
               onclick="focusCardFromPopup('${card.id}')"
             >
-              <div class="flex items-center gap-3 min-w-0">
+              <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
                 <div class="w-9 h-9 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-base shrink-0">
                   ${card.icon || '🃏'}
                 </div>
-                <div class="min-w-0">
+                <div class="min-w-0 flex-1">
                   <div class="flex items-center gap-1.5">
                     <span class="text-xs sm:text-sm font-bold text-white truncate">${escapeHtml(card.name)}</span>
                     <span class="px-1.5 py-0.2 text-[10px] font-mono rounded bg-zinc-800 text-zinc-300 shrink-0">${gradeTag}</span>
@@ -1924,27 +1959,29 @@
                 </div>
               </div>
 
-              <div class="flex items-center gap-3 shrink-0">
-              <div class="text-right font-mono">
-                <span class="block text-[10px] text-zinc-500">Mkt: ${formatCurrency(pricing.blended)}</span>
-                <span class="block text-xs sm:text-sm font-extrabold text-emerald-400">${formatCurrency(pricing.offer)}</span>
+              <div class="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-800/60">
+                <div class="text-left sm:text-right font-mono">
+                  <span class="block text-[10px] text-zinc-500">Mkt: ${formatCurrency(pricing.blended)}</span>
+                  <span class="block text-xs sm:text-sm font-extrabold text-emerald-400">${formatCurrency(pricing.offer)}</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onclick="event.stopPropagation(); addToMyCollection('${card.id}', globalCondition, globalGrade, 1);"
+                    title="Track in My Collection"
+                    class="px-3 py-2 rounded-lg bg-purple-600/20 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/35 text-xs font-extrabold transition cursor-pointer"
+                  >
+                    + Track
+                  </button>
+                  <button
+                    type="button"
+                    onclick="event.stopPropagation(); addToSellLot('${card.id}', globalCondition, globalGrade);"
+                    class="px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-extrabold transition cursor-pointer"
+                  >
+                    + Lot
+                  </button>
+                </div>
               </div>
-              <button
-                type="button"
-                onclick="event.stopPropagation(); addToMyCollection('${card.id}', globalCondition, globalGrade, 1);"
-                title="Track in My Collection"
-                class="px-2.5 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/35 text-xs font-extrabold transition cursor-pointer"
-              >
-                + Track
-              </button>
-              <button
-                type="button"
-                onclick="event.stopPropagation(); addToSellLot('${card.id}', globalCondition, globalGrade);"
-                class="px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-extrabold transition cursor-pointer"
-              >
-                + Lot
-              </button>
-            </div>
             </div>
           `;
         }).join('');
@@ -2632,6 +2669,8 @@
       document.getElementById('lotItemCountBadge').textContent = totalCount;
       document.getElementById('mobileLotCountBadge').textContent = totalCount;
       document.getElementById('mobileDrawerCount').textContent = totalCount;
+      const mobileBarCount = document.getElementById('mobileBarCountBadge');
+      if (mobileBarCount) mobileBarCount.textContent = totalCount;
 
       document.getElementById('lotTcgTotal').textContent = formatCurrency(tcgTotal);
       document.getElementById('lotEbayTotal').textContent = formatCurrency(ebayTotal);
@@ -2641,6 +2680,8 @@
 
       document.getElementById('mobileLotMarket').textContent = formatCurrency(marketTotal);
       document.getElementById('mobileLotPayout').textContent = formatCurrency(payoutTotal);
+      const mobileBarPayout = document.getElementById('mobileBarPayoutTotal');
+      if (mobileBarPayout) mobileBarPayout.textContent = formatCurrency(payoutTotal);
 
       const feeNote = document.getElementById('feeAdvantageNote');
       const feeSavedEl = document.getElementById('feeSavedAmount');
@@ -2653,9 +2694,11 @@
 
       const execBtn = document.getElementById('executeOfferBtn');
       const mobileExecBtn = document.getElementById('mobileExecuteOfferBtn');
+      const mobileBarBtn = document.getElementById('mobileBarCheckoutBtn');
       const hasItems = totalCount > 0;
       execBtn.disabled = !hasItems;
       if (mobileExecBtn) mobileExecBtn.disabled = !hasItems;
+      if (mobileBarBtn) mobileBarBtn.disabled = !hasItems;
     }
 
     // =========================================================================
@@ -2663,7 +2706,9 @@
     // =========================================================================
     function toggleMobileLot() {
       const drawer = document.getElementById('mobileLotDrawer');
+      const isOpening = drawer.classList.contains('hidden');
       drawer.classList.toggle('hidden');
+      document.body.style.overflow = isOpening ? 'hidden' : '';
     }
 
     // =========================================================================
