@@ -45,9 +45,9 @@
       background: linear-gradient(
         135deg,
         rgba(255, 255, 255, 0.04) 0%,
-        rgba(168, 85, 247, 0.14) 25%,
-        rgba(16, 185, 129, 0.12) 50%,
-        rgba(59, 130, 246, 0.14) 75%,
+        rgba(168, 85, 247, 0.16) 25%,
+        rgba(16, 185, 129, 0.14) 50%,
+        rgba(59, 130, 246, 0.16) 75%,
         rgba(255, 255, 255, 0.04) 100%
       );
       background-size: 200% 200%;
@@ -58,6 +58,21 @@
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
+    }
+
+    @keyframes fadeSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-fade-slide {
+      animation: fadeSlideUp 0.28s ease-out forwards;
     }
 
     /* Custom Scrollbar */
@@ -75,9 +90,36 @@
     ::-webkit-scrollbar-thumb:hover {
       background: #3f3f46;
     }
+
+    /* Range slider styling */
+    input[type=range] {
+      -webkit-appearance: none;
+      background: transparent;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 18px;
+      width: 18px;
+      border-radius: 50%;
+      background: #10b981;
+      cursor: pointer;
+      margin-top: -6px;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+      border: 2px solid #ffffff;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 6px;
+      cursor: pointer;
+      background: #27272a;
+      border-radius: 999px;
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col antialiased selection:bg-emerald-500/30 selection:text-emerald-200">
+
+  <!-- Toast Notification Banner -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-[60] flex flex-col gap-2 pointer-events-none"></div>
 
   <!-- Top Navigation Header -->
   <header class="sticky top-0 z-40 bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800/80">
@@ -99,7 +141,7 @@
             <h1 class="text-lg sm:text-xl font-extrabold tracking-tight text-white">
               POKÉ<span class="text-purple-400">VAULT</span>
             </h1>
-            <span class="px-2 py-0.5 text-[11px] font-mono font-bold uppercase tracking-wider rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+            <span id="headerLiveBadge" class="px-2 py-0.5 text-[11px] font-mono font-bold uppercase tracking-wider rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
               75% BUYLIST LIVE
             </span>
           </div>
@@ -108,17 +150,36 @@
       </div>
 
       <!-- Global Payout Rate & Quick Add Custom Card -->
-      <div class="flex items-center gap-3 sm:gap-5">
-        <!-- Automatic Per-Card Tier Status Pill -->
+      <div class="flex items-center gap-2.5 sm:gap-4">
+        <!-- Payout Percentage Control Pill -->
         <div class="hidden md:flex items-center gap-3 bg-zinc-900/90 border border-zinc-800 px-3.5 py-2 rounded-xl">
           <div class="flex flex-col">
-            <span class="text-[10px] uppercase tracking-wider text-zinc-400 font-semibold">Per-Card Buyout Tiers</span>
-            <span id="headerPayoutBadge" class="text-xs font-mono font-bold text-emerald-400">75% Standard • <span class="text-amber-300">85% Cards $1k+</span></span>
+            <span class="text-[10px] uppercase tracking-wider text-zinc-400 font-semibold">Buyout Rate</span>
+            <span id="headerPayoutBadge" class="text-sm font-mono font-bold text-emerald-400">75% Cash</span>
           </div>
+          <input
+            id="globalPayoutSlider"
+            type="range"
+            min="50"
+            max="90"
+            step="1"
+            value="75"
+            class="w-24 sm:w-28"
+            aria-label="Global Payout Percentage"
+          />
+          <button
+            id="reset75Btn"
+            type="button"
+            title="Reset to standard 75% payout"
+            class="text-[11px] font-mono px-2 py-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition cursor-pointer"
+          >
+            75%
+          </button>
         </div>
 
         <!-- Custom Card Modal Trigger -->
         <button
+          type="button"
           onclick="openCustomCardModal()"
           class="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 active:scale-[0.98] text-white text-xs sm:text-sm font-semibold shadow-lg shadow-purple-600/20 transition cursor-pointer"
         >
@@ -142,8 +203,9 @@
 
         <!-- Mobile Lot Drawer Toggle -->
         <button
+          type="button"
           onclick="toggleMobileLot()"
-          class="lg:hidden relative flex items-center gap-2 px-3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-bold text-xs shadow-lg shadow-emerald-500/20"
+          class="lg:hidden relative flex items-center gap-2 px-3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-bold text-xs shadow-lg shadow-emerald-500/20 cursor-pointer"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -157,7 +219,7 @@
   <!-- Main Workspace -->
   <div class="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-    <!-- Left & Center Column: Search, Filters & Card Grid (8 cols on desktop) -->
+    <!-- Left & Center Column: Search, Filters, Recent Sales & Results (8 cols on desktop) -->
     <main class="lg:col-span-8 flex flex-col gap-5">
 
       <!-- Search & Global Controls Bar -->
@@ -178,6 +240,7 @@
             <div class="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
               <button
                 id="clearSearchBtn"
+                type="button"
                 onclick="clearSearch()"
                 title="Clear search"
                 class="hidden px-1.5 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white text-xs transition cursor-pointer"
@@ -200,7 +263,7 @@
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
                   <span id="popupMatchCount" class="text-[11px] font-mono text-purple-300 bg-purple-500/15 px-2 py-0.5 rounded-md border border-purple-500/30">0 found</span>
-                  <button onclick="closeSimilarPopup()" class="text-zinc-400 hover:text-white text-xs px-1.5 py-0.5 rounded hover:bg-zinc-800 cursor-pointer">✕</button>
+                  <button type="button" onclick="closeSimilarPopup()" class="text-zinc-400 hover:text-white text-xs px-1.5 py-0.5 rounded hover:bg-zinc-800 cursor-pointer">✕</button>
                 </div>
               </div>
 
@@ -250,29 +313,37 @@
               aria-label="Global Grade Filter"
               class="w-full px-3 py-2.5 bg-zinc-950 border border-zinc-800 focus:border-purple-500 rounded-xl text-xs sm:text-sm text-zinc-200 outline-none cursor-pointer"
             >
-              <option value="RAW">Grade: Raw / Ungraded</option>
-              <option value="PSA9">Slab: PSA 9 Mint</option>
-              <option value="BGS95">Slab: BGS 9.5 Gem Mint</option>
-              <option value="CGC10">Slab: CGC 10 Pristine</option>
-              <option value="PSA10">Slab: PSA 10 Gem Mint</option>
+              <option value="RAW">Grade: Raw / Ungraded (1.0x)</option>
+              <option value="PSA9">Slab: PSA 9 Mint (1.45x)</option>
+              <option value="BGS95">Slab: BGS 9.5 Gem Mint (1.85x)</option>
+              <option value="CGC10">Slab: CGC 10 Pristine (2.20x)</option>
+              <option value="PSA10">Slab: PSA 10 Gem Mint (2.60x)</option>
             </select>
           </div>
         </div>
 
-        <!-- Mobile Per-Card Tier Banner (visible on < md) -->
-        <div class="mt-3 pt-3 border-t border-zinc-800/80 flex md:hidden items-center justify-between gap-2 text-xs">
-          <span class="text-zinc-400 font-medium">Per-Card Rate: <strong class="text-emerald-400 font-mono">75%</strong></span>
-          <span class="font-mono text-amber-300 font-semibold">Single Cards $1,000+ = 85% VIP</span>
+        <!-- Mobile Payout Slider (visible on < md) -->
+        <div class="mt-3 pt-3 border-t border-zinc-800/80 flex md:hidden items-center justify-between gap-3">
+          <span class="text-xs text-zinc-400 font-medium">Instant Buyout %: <strong id="mobilePayoutLabel" class="text-emerald-400 font-mono">75%</strong></span>
+          <input
+            id="mobilePayoutSlider"
+            type="range"
+            min="50"
+            max="90"
+            step="1"
+            value="75"
+            class="w-36"
+          />
         </div>
 
         <!-- Era / Category Filter Pills & Sort -->
         <div class="mt-3.5 pt-3 border-t border-zinc-800/70 flex flex-wrap items-center justify-between gap-3">
           <div id="eraFilterContainer" class="flex flex-wrap items-center gap-1.5">
-            <button data-era="ALL" class="era-pill active px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 text-white transition">All Cards</button>
-            <button data-era="Gengar Line" class="era-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800 transition">👻 Gengar / Gastly Line</button>
-            <button data-era="Sword & Shield" class="era-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800 transition">Modern Alt Arts / SIRs</button>
-            <button data-era="WOTC Vintage" class="era-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800 transition">WOTC Vintage</button>
-            <button data-era="Sun & Moon / Promo" class="era-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800 transition">Sun & Moon / Promos</button>
+            <button type="button" data-era="ALL" class="era-pill active px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 text-white transition cursor-pointer">All Cards</button>
+            <button type="button" data-era="Gengar Line" class="era-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800 transition cursor-pointer">👻 Gengar / Gastly Line</button>
+            <button type="button" data-era="Sword & Shield" class="era-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800 transition cursor-pointer">Modern Alt Arts / SIRs</button>
+            <button type="button" data-era="WOTC Vintage" class="era-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800 transition cursor-pointer">WOTC Vintage</button>
+            <button type="button" data-era="Sun & Moon / Promo" class="era-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800 transition cursor-pointer">Sun & Moon / Promos</button>
           </div>
 
           <div class="flex items-center gap-2">
@@ -338,28 +409,50 @@
         </div>
       </section>
 
-      <!-- Search-First Prompt State (Bottom card grid removed) -->
-      <div class="bg-zinc-900/40 border border-zinc-800/70 rounded-2xl p-8 sm:p-10 text-center space-y-3">
+      <!-- Active Search / Filter Results Grid (Shown when user searches, selects an Era filter, or clicks "Show All in Grid") -->
+      <section id="activeResultsSection" class="hidden space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2 px-1">
+          <div class="flex items-center gap-2">
+            <h3 id="resultsSectionTitle" class="text-sm font-extrabold text-white">Matching Cards</h3>
+            <span id="resultsCountBadge" class="px-2 py-0.5 text-xs font-mono rounded-md bg-purple-500/15 text-purple-300 border border-purple-500/30">0</span>
+          </div>
+          <button
+            type="button"
+            onclick="resetAllFiltersToPrompt()"
+            class="text-xs text-zinc-400 hover:text-white underline underline-offset-4 cursor-pointer"
+          >
+            Reset View
+          </button>
+        </div>
+
+        <div id="cardsGridContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Populated dynamically -->
+        </div>
+      </section>
+
+      <!-- Search-First Prompt State -->
+      <div id="searchPromptSection" class="bg-zinc-900/40 border border-zinc-800/70 rounded-2xl p-8 sm:p-10 text-center space-y-3">
         <div class="w-12 h-12 mx-auto rounded-2xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z" />
           </svg>
         </div>
-        <h2 class="text-base sm:text-lg font-extrabold text-white">Search Any Pokémon to View Comps & Instant Buyout</h2>
+        <h2 class="text-base sm:text-lg font-extrabold text-white">Search Any Pokémon to View Comps & <span class="promptRateText">75%</span> Buyout</h2>
         <p class="text-xs sm:text-sm text-zinc-400 max-w-lg mx-auto">
-          Start typing a Pokémon name above (like <span class="text-purple-300 font-semibold">Gengar</span>, <span class="text-purple-300 font-semibold">Umbreon</span>, <span class="text-purple-300 font-semibold">Charizard</span>, or <span class="text-purple-300 font-semibold">Pikachu</span>) to view live TCGPlayer, eBay Sold, and Collectr values. Cards under $1,000 pay <span class="text-emerald-400 font-semibold">75%</span>, and any single card worth <span class="text-amber-300 font-semibold">$1,000+</span> automatically pays <span class="text-amber-300 font-semibold">85% VIP</span>!
+          Start typing a Pokémon name above (like <span class="text-purple-300 font-semibold">Gengar</span>, <span class="text-purple-300 font-semibold">Umbreon</span>, <span class="text-purple-300 font-semibold">Charizard</span>, or <span class="text-purple-300 font-semibold">Pikachu</span>) to view live TCGPlayer, eBay Sold, and Collectr values in the popup and add cards straight to your <span class="promptRateText">75%</span> Sell Lot.
         </p>
         <div class="flex flex-wrap items-center justify-center gap-2 pt-2">
           <button type="button" onclick="triggerQuickPokemonSearch('Gengar')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 transition cursor-pointer">Search Gengar</button>
           <button type="button" onclick="triggerQuickPokemonSearch('Umbreon')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition cursor-pointer">Search Umbreon</button>
           <button type="button" onclick="triggerQuickPokemonSearch('Charizard')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition cursor-pointer">Search Charizard</button>
           <button type="button" onclick="triggerQuickPokemonSearch('Pikachu')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition cursor-pointer">Search Pikachu</button>
+          <button type="button" onclick="showFullCatalogGrid()" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 transition cursor-pointer">Browse All 24 Cards</button>
         </div>
       </div>
 
     </main>
 
-    <!-- Right Column: Sticky Sell Lot / Trade-In Calculator Sidebar (4 cols on desktop) -->
+    <!-- Right Column: Sticky 75% Sell Lot / Trade-In Calculator Sidebar (4 cols on desktop) -->
     <aside id="sellLotSidebar" class="hidden lg:flex lg:col-span-4 flex-col sticky top-24 bg-zinc-900/90 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden max-h-[calc(100vh-7rem)]">
       <!-- Sidebar Header -->
       <div class="p-4 bg-gradient-to-r from-zinc-900 via-zinc-900 to-emerald-950/30 border-b border-zinc-800 flex items-center justify-between">
@@ -370,21 +463,16 @@
               0
             </span>
           </div>
-          <p id="sidebarRateText" class="text-xs text-zinc-400 mt-0.5">75% Standard • <span class="text-amber-300 font-semibold">85% on $1,000+ cards</span></p>
+          <p class="text-xs text-zinc-400 mt-0.5">Calculated at <span id="sidebarRateText" class="text-emerald-400 font-mono font-semibold">75%</span> of Blended Market</p>
         </div>
         <button
           id="clearLotBtn"
+          type="button"
           onclick="clearSellLot()"
           class="text-xs text-zinc-400 hover:text-rose-400 transition px-2 py-1 rounded-lg hover:bg-zinc-800 cursor-pointer"
         >
           Clear All
         </button>
-      </div>
-
-      <!-- Per-Card VIP Rule Notice Banner -->
-      <div id="vipRuleBanner" class="px-4 py-2.5 bg-zinc-950/90 border-b border-zinc-800/90 flex items-center justify-between gap-2 text-[11px]">
-        <span id="vipRuleStatusLabel" class="font-semibold text-zinc-300">Single cards $1,000+ auto-upgrade to <span class="text-amber-300 font-mono font-bold">85%</span></span>
-        <span id="vipCardCountBadge" class="font-mono text-[10px] px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-400">0 VIP cards</span>
       </div>
 
       <!-- Lot Items Scrollable List -->
@@ -397,7 +485,7 @@
             </svg>
           </div>
           <p class="text-sm font-semibold text-zinc-200">Your Sell Lot is Empty</p>
-          <p class="text-xs text-zinc-500 mt-1">Search a Pokémon above and add cards to calculate your instant cash offer (<span class="text-emerald-400 font-semibold">75%</span> standard, <span class="text-amber-300 font-semibold">85%</span> on single cards $1,000+).</p>
+          <p class="text-xs text-zinc-500 mt-1">Click <span class="text-emerald-400 font-semibold">"+ Add to 75% Sell Lot"</span> on any card to calculate an instant cash or trade-in buyout quote.</p>
         </div>
       </div>
 
@@ -423,10 +511,10 @@
           </div>
         </div>
 
-        <!-- Highlighted Cash Payout Box -->
-        <div id="payoutHighlightBox" class="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between transition-colors">
+        <!-- Highlighted 75% Cash Payout Box -->
+        <div class="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between">
           <div>
-            <span id="payoutBoxTitle" class="text-[11px] font-bold uppercase tracking-wider text-emerald-400 block">Instant Cash Payout (<span id="payoutBoxPct">75%</span>)</span>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-400 block">Instant Cash Payout (<span id="payoutBoxPct">75%</span>)</span>
             <span class="text-[11px] text-zinc-400">Same-day PayPal / Venmo / Cash</span>
           </div>
           <div id="lotCashPayout" class="text-2xl font-mono font-extrabold text-emerald-400">
@@ -443,11 +531,12 @@
         <!-- Execute Offer Button -->
         <button
           id="executeOfferBtn"
+          type="button"
           onclick="openQuoteModal()"
           disabled
           class="w-full py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed text-zinc-950 font-extrabold text-sm shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-2 cursor-pointer"
         >
-          <span id="executeOfferBtnLabel">Review Offer & Enter Payout Info</span>
+          <span>Execute <span id="executeBtnPct">75%</span> Sell Offer & Quote</span>
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
           </svg>
@@ -462,11 +551,11 @@
     <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="toggleMobileLot()"></div>
     <div class="absolute right-0 top-0 bottom-0 w-full max-w-md bg-zinc-900 border-l border-zinc-800 flex flex-col">
       <div class="p-4 border-b border-zinc-800 flex items-center justify-between">
-        <div>
+        <div class="flex items-center gap-2">
           <h3 class="text-base font-extrabold text-white">Instant Sell Lot (<span id="mobileDrawerCount">0</span>)</h3>
-          <p id="mobileVipStatusText" class="text-[11px] text-zinc-400">75% standard • 85% on single cards $1,000+</p>
+          <button type="button" onclick="clearSellLot()" class="text-xs text-zinc-400 hover:text-rose-400 px-2 py-0.5 rounded bg-zinc-800">Clear</button>
         </div>
-        <button onclick="toggleMobileLot()" class="p-2 rounded-lg bg-zinc-800 text-zinc-300">✕</button>
+        <button type="button" onclick="toggleMobileLot()" class="p-2 rounded-lg bg-zinc-800 text-zinc-300">✕</button>
       </div>
       <div id="mobileLotItemsContainer" class="flex-1 overflow-y-auto p-4 space-y-2.5"></div>
       <div class="p-4 bg-zinc-950 border-t border-zinc-800 space-y-3">
@@ -479,559 +568,2627 @@
           <span id="mobileLotPayout" class="text-xl font-mono font-extrabold text-emerald-400">$0.00</span>
         </div>
         <button
-          onclick="toggleMobileLot(); openQuoteModal();"
-          class="w-full py-3 rounded-xl bg-emerald-500 text-zinc-950 font-extrabold text-sm"
-        >
-          Review Offer & Enter Payout Info
-        </button>
-      </div>
-    </div>
-  </div>
-  <!-- Execute Sell Offer / Quote Receipt & Automated Seller Payout Intake Modal -->
-  <div id="quoteModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
-    <div class="absolute inset-0 bg-black/85 backdrop-blur-sm" onclick="closeQuoteModal()"></div>
-    <div class="relative w-full max-w-2xl bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-      <div class="p-5 bg-gradient-to-r from-emerald-950/50 via-zinc-900 to-purple-950/40 border-b border-zinc-800 flex items-center justify-between">
-        <div>
-          <span id="quoteModalHeaderBadge" class="px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">OFFICIAL BUYLIST QUOTE</span>
-          <h3 class="text-lg font-extrabold text-white mt-1">PokéVault Instant Trade-In & Payout Intake</h3>
-        </div>
-        <button type="button" onclick="closeQuoteModal()" class="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center cursor-pointer">✕</button>
-      </div>
-
-      <div class="p-5 overflow-y-auto space-y-4">
-        <!-- Quote Metadata Bar -->
-        <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-400 bg-zinc-950 p-3 rounded-xl border border-zinc-800">
-          <div>Quote ID: <span id="quoteIdDisplay" class="font-mono text-white font-bold">PV-84920</span></div>
-          <div>Payout Rule: <span id="quoteTierDisplay" class="font-mono text-emerald-400 font-bold">75% Standard / 85% Cards $1k+</span></div>
-          <div>Date: <span id="quoteDateDisplay" class="font-mono text-zinc-300"></span></div>
-        </div>
-
-        <!-- Itemized Receipt Table -->
-        <div class="border border-zinc-800 rounded-xl overflow-hidden">
-          <table class="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr class="bg-zinc-950 text-zinc-400 border-b border-zinc-800">
-                <th class="py-2.5 px-3 font-semibold">Card / Condition / Grade</th>
-                <th class="py-2.5 px-3 font-semibold text-right">Market</th>
-                <th class="py-2.5 px-3 font-semibold text-right">Rate</th>
-                <th class="py-2.5 px-3 font-semibold text-right text-emerald-400">Payout</th>
-              </tr>
-            </thead>
-            <tbody id="quoteTableBody" class="divide-y divide-zinc-800/70 bg-zinc-900/50">
-              <!-- Populated dynamically -->
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Summary Totals -->
-        <div class="p-4 rounded-xl bg-zinc-950 border border-zinc-800 space-y-2">
-          <div class="flex justify-between text-xs text-zinc-400">
-            <span>Total Blended Market Value (TCG + eBay + Collectr):</span>
-            <span id="quoteMarketTotal" class="font-mono font-semibold text-white">$0.00</span>
-          </div>
-          <div class="flex justify-between items-center pt-2 border-t border-zinc-800">
-            <span class="text-sm font-bold text-white">Net Instant Cash Payout (<span id="quotePctLabel">75%</span>):</span>
-            <span id="quoteCashTotal" class="text-2xl font-mono font-extrabold text-emerald-400">$0.00</span>
-          </div>
-        </div>
-
-        <!-- Automated Customer Payout & Fulfillment Intake Form -->
-        <form id="sellerPayoutForm" onsubmit="confirmSaleSubmission(event)" class="p-4 rounded-xl bg-zinc-950/90 border border-purple-500/35 space-y-3.5">
-          <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
-            <div>
-              <h4 class="text-xs font-extrabold uppercase tracking-wider text-purple-300">Seller Payout & Fulfillment Details</h4>
-              <p class="text-[11px] text-zinc-400 mt-0.5">Enter where you want your cash payout sent once cards are verified.</p>
-            </div>
-            <span class="text-[10px] font-mono text-zinc-500">* Required</span>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label for="sellerFullName" class="block text-[11px] font-semibold text-zinc-300 mb-1">Full Name / Social Handle *</label>
-              <input
-                id="sellerFullName"
-                type="text"
-                required
-                placeholder="e.g. Ash Ketchum (@ash_tcg)"
-                class="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 focus:border-emerald-500 rounded-lg text-xs text-white outline-none"
-              />
-            </div>
-            <div>
-              <label for="sellerContactEmail" class="block text-[11px] font-semibold text-zinc-300 mb-1">Email or Phone (For Receipt & Tracking) *</label>
-              <input
-                id="sellerContactEmail"
-                type="text"
-                required
-                placeholder="e.g. collector@email.com"
-                class="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 focus:border-emerald-500 rounded-lg text-xs text-white outline-none"
-              />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label for="sellerPayoutMethod" class="block text-[11px] font-semibold text-zinc-300 mb-1">Preferred Payout Method *</label>
-              <select
-                id="sellerPayoutMethod"
-                onchange="updatePayoutHandlePlaceholder()"
-                class="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 focus:border-emerald-500 rounded-lg text-xs text-white outline-none cursor-pointer"
-              >
-                <option value="PayPal Goods & Services">PayPal Goods & Services</option>
-                <option value="PayPal Friends & Family">PayPal Friends & Family</option>
-                <option value="Venmo">Venmo</option>
-                <option value="Zelle">Zelle</option>
-                <option value="Cash App">Cash App</option>
-                <option value="In-Person Cash">In-Person Cash (Local Meetup)</option>
-              </select>
-            </div>
-            <div>
-              <label for="sellerPayoutHandle" class="block text-[11px] font-semibold text-zinc-300 mb-1">Payout Handle / Email / Phone *</label>
-              <input
-                id="sellerPayoutHandle"
-                type="text"
-                required
-                placeholder="e.g. paypal.me/yourname or email"
-                class="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 focus:border-emerald-500 rounded-lg text-xs font-mono text-white outline-none"
-              />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label for="sellerDeliveryMethod" class="block text-[11px] font-semibold text-zinc-300 mb-1">Card Handoff Method *</label>
-              <select
-                id="sellerDeliveryMethod"
-                class="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 focus:border-emerald-500 rounded-lg text-xs text-white outline-none cursor-pointer"
-              >
-                <option value="Tracked Mail-In (Bubble Mailer / Box)">Tracked Mail-In (Bubble Mailer / Box)</option>
-                <option value="Local In-Person Drop-Off">Local In-Person Drop-Off</option>
-              </select>
-            </div>
-            <div>
-              <label for="sellerReturnAddress" class="block text-[11px] font-semibold text-zinc-300 mb-1">Return Address / Meetup City *</label>
-              <input
-                id="sellerReturnAddress"
-                type="text"
-                required
-                placeholder="Street, City, State, ZIP (or Local City)"
-                class="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 focus:border-emerald-500 rounded-lg text-xs text-white outline-none"
-              />
-            </div>
-          </div>
-
-          <div class="pt-1 flex flex-wrap items-center justify-between gap-2.5">
-            <button
-              type="button"
-              onclick="copyQuoteReceipt()"
-              class="flex-1 py-2.5 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-semibold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
-            >
-              <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-              </svg>
-              <span>Copy Ticket</span>
-            </button>
-            <button
-              type="button"
-              onclick="openPayoutMethodPopup()"
-              class="py-2.5 px-3.5 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/40 text-purple-200 font-bold text-xs transition cursor-pointer"
-            >
-              Payout Popup
-            </button>
-            <button
-              type="submit"
-              id="submitPayoutTicketBtn"
-              class="flex-1 py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-extrabold text-xs shadow-lg shadow-emerald-500/20 transition cursor-pointer"
-            >
-              Commit Offer &amp; Choose Payout
-            </button>
-          </div>
-        </form>
-
-        <!-- Confirmed Automated Payout Ticket Banner (Shown after submission) -->
-        <div id="confirmedTicketPanel" class="hidden p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/40 space-y-2.5">
-          <div class="flex items-center justify-between gap-2">
-            <div class="flex items-center gap-2">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-300">Payout Ticket Locked &amp; Copied to Clipboard</span>
-            </div>
-            <button type="button" onclick="copyQuoteReceipt()" class="px-2.5 py-1 rounded-lg bg-emerald-500 text-zinc-950 font-extrabold text-[11px] cursor-pointer">Copy Again</button>
-          </div>
-          <p class="text-[11px] text-zinc-300">
-            Send this ticket to the buyer via DM, text, or email. Your payout will be sent via your selected method as soon as card condition is verified.
-          </p>
-          <pre id="confirmedTicketPreview" class="p-3 rounded-lg bg-zinc-950 border border-zinc-800 text-[11px] font-mono text-zinc-200 whitespace-pre-wrap overflow-x-auto"></pre>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Dedicated Preferred Payout Method Popup (Opens on Offer & Quote Commitment) -->
-  <div id="payoutMethodPopupModal" class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
-    <div class="absolute inset-0 bg-black/85 backdrop-blur-sm" onclick="closePayoutMethodPopup()"></div>
-    <div class="relative w-full max-w-lg bg-zinc-900 border border-emerald-500/40 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-      <div class="p-4 sm:p-5 bg-gradient-to-r from-emerald-950/60 via-zinc-900 to-purple-950/50 border-b border-zinc-800 flex items-center justify-between gap-3">
-        <div>
-          <span class="px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-            OFFER COMMITTED • PAYOUT SETUP
-          </span>
-          <h3 class="text-base sm:text-lg font-extrabold text-white mt-1">Where Should We Send Your Payout?</h3>
-        </div>
-        <button
+          id="mobileExecuteOfferBtn"
           type="button"
-          onclick="closePayoutMethodPopup()"
-          aria-label="Close payout method popup"
-          class="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center cursor-pointer shrink-0"
+          disabled
+          onclick="toggleMobileLot(); openQuoteModal();"
+          class="w-full py-3 rounded-xl bg-emerald-500 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-extrabold text-sm"
         >
-          ✕
+          Generate Sell Offer Receipt
         </button>
       </div>
+    </div>
+  </div>
 
-      <form id="preferredPayoutPopupForm" onsubmit="submitPreferredPayoutPopup(event)" class="p-4 sm:p-5 overflow-y-auto space-y-4">
-        <!-- Committed Quote & Payout Summary -->
-        <div class="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-between gap-3">
-          <div>
-            <div class="text-[11px] font-mono text-zinc-400">Quote <span id="popupQuoteId" class="text-white font-bold">PV-000000</span></div>
-            <div class="text-xs text-zinc-300 font-semibold mt-0.5">Locked Cash Payout Total</div>
-          </div>
-          <div id="popupLockedPayoutAmount" class="text-xl sm:text-2xl font-mono font-extrabold text-emerald-400">$0.00</div>
-        </div>
-
-        <!-- Quick Payment Method Pills (Venmo, PayPal, Zelle, Cash App, Other) -->
+  <!-- Custom Card Entry Modal -->
+  <div id="customCardModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeCustomCardModal()"></div>
+    <div class="relative w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col">
+      <div class="p-5 border-b border-zinc-800 flex items-center justify-between shrink-0">
         <div>
-          <label class="block text-[11px] font-semibold text-zinc-300 mb-1.5">Select Preferred Payout System *</label>
-          <div id="payoutSystemQuickPills" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            <button type="button" data-payout-system="Venmo" onclick="selectPopupPayoutSystem('Venmo')" class="payout-system-pill px-3 py-2 rounded-xl text-xs font-bold bg-zinc-950 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 transition cursor-pointer">Venmo</button>
-            <button type="button" data-payout-system="PayPal" onclick="selectPopupPayoutSystem('PayPal')" class="payout-system-pill px-3 py-2 rounded-xl text-xs font-bold bg-zinc-950 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 transition cursor-pointer">PayPal</button>
-            <button type="button" data-payout-system="Zelle" onclick="selectPopupPayoutSystem('Zelle')" class="payout-system-pill px-3 py-2 rounded-xl text-xs font-bold bg-zinc-950 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 transition cursor-pointer">Zelle</button>
-            <button type="button" data-payout-system="Cash App" onclick="selectPopupPayoutSystem('Cash App')" class="payout-system-pill px-3 py-2 rounded-xl text-xs font-bold bg-zinc-950 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 transition cursor-pointer">Cash App</button>
-            <button type="button" data-payout-system="Apple Cash" onclick="selectPopupPayoutSystem('Apple Cash')" class="payout-system-pill px-3 py-2 rounded-xl text-xs font-bold bg-zinc-950 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 transition cursor-pointer">Apple Cash</button>
-            <button type="button" data-payout-system="Other" onclick="selectPopupPayoutSystem('Other')" class="payout-system-pill px-3 py-2 rounded-xl text-xs font-bold bg-zinc-950 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 transition cursor-pointer">Other Method</button>
-          </div>
+          <h3 class="text-lg font-extrabold text-white">Add Custom Pokémon Card</h3>
+          <p class="text-xs text-zinc-400">Enter market comps from TCGPlayer, eBay Sold, or Collectr</p>
         </div>
+        <button type="button" onclick="closeCustomCardModal()" class="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center cursor-pointer">✕</button>
+      </div>
 
+      <form id="customCardForm" onsubmit="handleCustomCardSubmit(event)" class="p-5 space-y-4 overflow-y-auto">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label for="popupPayoutSystemSelect" class="block text-[11px] font-semibold text-zinc-300 mb-1">Payout Platform / System *</label>
-            <select
-              id="popupPayoutSystemSelect"
-              onchange="handlePopupPayoutSystemChange()"
-              class="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 focus:border-emerald-500 rounded-xl text-xs text-white outline-none cursor-pointer"
-            >
-              <option value="Venmo">Venmo</option>
-              <option value="PayPal">PayPal</option>
-              <option value="Zelle">Zelle</option>
-              <option value="Cash App">Cash App</option>
-              <option value="Apple Cash">Apple Cash</option>
-              <option value="Other">Other (Custom Method)</option>
+            <label class="block text-xs font-semibold text-zinc-300 mb-1">Card Name *</label>
+            <input id="customName" type="text" required placeholder="e.g. Gengar ex Full Art" class="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 focus:border-purple-500 rounded-xl text-sm text-white outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-zinc-300 mb-1">Set Name *</label>
+            <input id="customSet" type="text" required placeholder="e.g. Temporal Forces" class="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 focus:border-purple-500 rounded-xl text-sm text-white outline-none" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-zinc-300 mb-1">Card Number</label>
+            <input id="customNumber" type="text" placeholder="e.g. 193/162" class="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 focus:border-purple-500 rounded-xl text-sm text-white outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-zinc-300 mb-1">Rarity</label>
+            <select id="customRarity" class="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white outline-none">
+              <option value="Special Illustration Rare">Special Illustration Rare</option>
+              <option value="Alternate Art VMAX">Alternate Art VMAX</option>
+              <option value="Alternate Art V">Alternate Art V</option>
+              <option value="Holo Rare">Holo Rare</option>
+              <option value="Gold Hyper Rare">Gold Hyper Rare</option>
+              <option value="Illustration Rare">Illustration Rare</option>
+              <option value="Black Star Promo">Black Star Promo</option>
             </select>
           </div>
-
-          <div id="popupCustomSystemWrapper" class="hidden">
-            <label for="popupCustomSystemName" class="block text-[11px] font-semibold text-zinc-300 mb-1">Specify Other Payment System *</label>
-            <input
-              id="popupCustomSystemName"
-              type="text"
-              placeholder="e.g. Bank Wire, Chime, Check, Crypto"
-              class="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 focus:border-emerald-500 rounded-xl text-xs text-white outline-none"
-            />
-          </div>
-
-          <div id="popupAccountHandleWrapper" class="sm:col-span-2">
-            <label id="popupPayoutAccountLabel" for="popupPayoutAccountInput" class="block text-[11px] font-semibold text-zinc-300 mb-1">Your Venmo @Handle, Email, or Phone *</label>
-            <input
-              id="popupPayoutAccountInput"
-              type="text"
-              required
-              placeholder="e.g. @your-venmo-username"
-              class="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 focus:border-emerald-500 rounded-xl text-xs font-mono text-white outline-none"
-            />
+          <div class="col-span-2 sm:col-span-1">
+            <label class="block text-xs font-semibold text-zinc-300 mb-1">Era / Category</label>
+            <select id="customEra" class="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white outline-none">
+              <option value="Sword & Shield">Modern Alt Arts / SIRs</option>
+              <option value="Gengar Line">Gengar / Gastly Line</option>
+              <option value="WOTC Vintage">WOTC Vintage</option>
+              <option value="Sun & Moon / Promo">Sun & Moon / Promos</option>
+            </select>
           </div>
         </div>
 
-        <div>
-          <label for="popupPayoutNotes" class="block text-[11px] font-semibold text-zinc-300 mb-1">Payout Note / Backup Handle (Optional)</label>
-          <input
-            id="popupPayoutNotes"
-            type="text"
-            placeholder="e.g. Backup PayPal email or preferred payout timing"
-            class="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 focus:border-emerald-500 rounded-xl text-xs text-white outline-none"
-          />
+        <!-- Multi-Source Comp Inputs -->
+        <div class="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-zinc-300">Market Comps (USD)</span>
+            <span class="text-[11px] text-zinc-500">Leave blank to auto-fill from primary</span>
+          </div>
+          <div class="grid grid-cols-3 gap-2.5">
+            <div>
+              <label class="block text-[11px] font-semibold text-sky-400 mb-1">TCGPlayer *</label>
+              <input id="customTcg" type="number" step="0.01" min="0.01" required oninput="updateCustomCardPreview()" placeholder="0.00" class="w-full px-2.5 py-2 bg-zinc-900 border border-zinc-800 focus:border-sky-500 rounded-lg text-sm font-mono text-white outline-none" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-amber-400 mb-1">eBay Sold</label>
+              <input id="customEbay" type="number" step="0.01" min="0" oninput="updateCustomCardPreview()" placeholder="Auto" class="w-full px-2.5 py-2 bg-zinc-900 border border-zinc-800 focus:border-amber-500 rounded-lg text-sm font-mono text-white outline-none" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-purple-400 mb-1">Collectr</label>
+              <input id="customCollectr" type="number" step="0.01" min="0" oninput="updateCustomCardPreview()" placeholder="Auto" class="w-full px-2.5 py-2 bg-zinc-900 border border-zinc-800 focus:border-purple-500 rounded-lg text-sm font-mono text-white outline-none" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2.5 pt-1">
+            <div>
+              <label class="block text-[11px] font-semibold text-zinc-400 mb-1">Condition</label>
+              <select id="customCondition" onchange="updateCustomCardPreview()" class="w-full px-2.5 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-white outline-none">
+                <option value="NM">Near Mint (100%)</option>
+                <option value="LP">Lightly Played (85%)</option>
+                <option value="MP">Mod. Played (70%)</option>
+                <option value="HP">Heavily Played (50%)</option>
+                <option value="DMG">Damaged (35%)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-zinc-400 mb-1">Grade / Slab</label>
+              <select id="customGrade" onchange="updateCustomCardPreview()" class="w-full px-2.5 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-white outline-none">
+                <option value="RAW">Raw / Ungraded (1.0x)</option>
+                <option value="PSA9">PSA 9 Mint (1.45x)</option>
+                <option value="BGS95">BGS 9.5 Gem (1.85x)</option>
+                <option value="CGC10">CGC 10 Pristine (2.20x)</option>
+                <option value="PSA10">PSA 10 Gem (2.60x)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Live Payout Preview -->
+          <div class="pt-2 border-t border-zinc-800/80 flex items-center justify-between text-xs">
+            <span class="text-zinc-400">Blended Market: <strong id="customPreviewMarket" class="font-mono text-white">$0.00</strong></span>
+            <span class="text-emerald-400 font-semibold">Instant Cash Offer: <strong id="customPreviewOffer" class="font-mono text-base">$0.00</strong></span>
+          </div>
         </div>
 
-        <div class="pt-1 flex flex-wrap items-center justify-end gap-2.5">
-          <button
-            type="button"
-            onclick="closePayoutMethodPopup()"
-            class="px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-semibold text-xs transition cursor-pointer"
-          >
-            Back to Quote
+        <label class="flex items-center gap-2.5 text-xs text-zinc-300 cursor-pointer select-none">
+          <input id="customAddToLotCheck" type="checkbox" checked class="w-4 h-4 rounded accent-emerald-500" />
+          <span>Add directly to my Instant Sell Lot upon saving</span>
+        </label>
+
+        <div class="flex items-center justify-end gap-2.5 pt-2">
+          <button type="button" onclick="closeCustomCardModal()" class="px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-300 transition cursor-pointer">
+            Cancel
           </button>
-          <button
-            type="submit"
-            class="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-extrabold text-xs shadow-lg shadow-emerald-500/20 transition cursor-pointer"
-          >
-            Save Payout Method &amp; Lock Ticket
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs sm:text-sm font-extrabold shadow-lg shadow-emerald-500/20 transition cursor-pointer">
+            Save & Add Card
           </button>
         </div>
       </form>
     </div>
   </div>
 
+  <!-- Execute 75% Sell Offer & Quote Receipt Modal -->
+  <div id="quoteModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/85 backdrop-blur-sm" onclick="closeQuoteModal()"></div>
+    <div class="relative w-full max-w-2xl bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col">
+      <!-- Header -->
+      <div class="p-5 bg-gradient-to-r from-zinc-900 via-zinc-900 to-emerald-950/40 border-b border-zinc-800 flex items-center justify-between shrink-0">
+        <div>
+          <div class="flex items-center gap-2">
+            <span id="quoteStatusBadge" class="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">LOCKED BUYLIST QUOTE</span>
+            <span id="quoteReferenceId" class="text-xs font-mono text-zinc-400">#PV-75-000000</span>
+          </div>
+          <h3 id="quoteModalTitle" class="text-lg font-extrabold text-white mt-1">Instant Buyout Offer Review</h3>
+          <p id="quoteTimestamp" class="text-xs text-zinc-400">Generated just now • Valid for 24 hours</p>
+        </div>
+        <button type="button" onclick="closeQuoteModal()" class="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center cursor-pointer">✕</button>
+      </div>
+
+      <!-- 3-Step Progress Stepper -->
+      <div class="px-5 py-3 bg-zinc-950/90 border-b border-zinc-800/80 grid grid-cols-3 gap-2 text-[11px] font-semibold shrink-0">
+        <div id="stepperStep1" class="flex items-center gap-2 text-emerald-400">
+          <span class="w-5 h-5 rounded-full bg-emerald-500 text-zinc-950 font-mono font-extrabold flex items-center justify-center text-[11px]">1</span>
+          <span class="truncate">Offer Review</span>
+        </div>
+        <div id="stepperStep2" class="flex items-center gap-2 text-zinc-500">
+          <span class="w-5 h-5 rounded-full bg-zinc-800 text-zinc-400 font-mono font-extrabold flex items-center justify-center text-[11px]">2</span>
+          <span class="truncate">Payout Login</span>
+        </div>
+        <div id="stepperStep3" class="flex items-center gap-2 text-zinc-500">
+          <span class="w-5 h-5 rounded-full bg-zinc-800 text-zinc-400 font-mono font-extrabold flex items-center justify-center text-[11px]">3</span>
+          <span class="truncate">Disbursement</span>
+        </div>
+      </div>
+
+      <!-- STEP 1: OFFER REVIEW & ACCEPTANCE -->
+      <div id="quoteStep1Body" class="p-5 space-y-4 overflow-y-auto">
+        <!-- Itemized Receipt Table -->
+        <div class="rounded-xl bg-zinc-950 border border-zinc-800 overflow-hidden">
+          <div class="px-4 py-2.5 bg-zinc-900/80 border-b border-zinc-800 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+            <span>Card & Condition / Grade</span>
+            <span>Qty × Market → Buyout</span>
+          </div>
+          <div id="quoteReceiptItems" class="divide-y divide-zinc-800/70 max-h-56 overflow-y-auto">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- Financial Summary -->
+        <div class="p-4 rounded-xl bg-zinc-950 border border-zinc-800 space-y-2 text-xs">
+          <div class="flex justify-between text-zinc-400">
+            <span>Total Cards in Lot:</span>
+            <span id="quoteTotalCards" class="font-mono text-zinc-200">0 cards</span>
+          </div>
+          <div class="flex justify-between text-zinc-400">
+            <span>Blended Multi-Source Market Value:</span>
+            <span id="quoteMarketTotal" class="font-mono text-zinc-200">$0.00</span>
+          </div>
+          <div class="flex justify-between text-zinc-400">
+            <span>Applied Buyout Rate:</span>
+            <span id="quoteRateApplied" class="font-mono text-emerald-400 font-bold">75%</span>
+          </div>
+          <div class="pt-2 border-t border-zinc-800 flex items-center justify-between">
+            <span class="text-sm font-extrabold text-white">NET INSTANT PAYOUT:</span>
+            <span id="quoteNetPayout" class="text-2xl font-mono font-extrabold text-emerald-400">$0.00</span>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-xl bg-purple-500/10 border border-purple-500/25 flex items-start gap-2.5 text-xs text-purple-200">
+          <svg class="w-4 h-4 text-purple-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+          <span>Accepting locks your multi-source valuation for 24 hours and lets you securely connect your preferred payout account.</span>
+        </div>
+      </div>
+
+      <!-- STEP 2: CHOOSE PAYMENT METHOD & LOGIN / CONNECT ACCOUNT -->
+      <div id="quoteStep2Body" class="hidden p-5 space-y-4 overflow-y-auto">
+        <!-- Payout Banner -->
+        <div class="px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="text-xs font-bold text-emerald-300">Offer Accepted • Select Destination Account</span>
+          </div>
+          <span id="step2PayoutBadge" class="text-sm font-mono font-extrabold text-emerald-400">$0.00</span>
+        </div>
+
+        <!-- Payment Provider Cards Grid -->
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-2">1. Select Payout Provider</label>
+          <div id="paymentProviderGrid" class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            <!-- Populated dynamically by renderPaymentProviderCards() -->
+          </div>
+        </div>
+
+        <!-- Interactive OAuth / Bank Login & Verification Panel -->
+        <div id="paymentAuthContainer" class="rounded-2xl bg-zinc-950 border border-zinc-800 overflow-hidden">
+          <!-- Populated dynamically by renderPaymentAuthPanel() -->
+        </div>
+      </div>
+
+      <!-- STEP 3: DISBURSEMENT CONFIRMATION & OFFICIAL BUYBACK RECEIPT -->
+      <div id="quoteStep3Body" class="hidden p-5 space-y-4 overflow-y-auto">
+        <div class="p-5 rounded-2xl bg-gradient-to-br from-emerald-950/60 via-zinc-950 to-purple-950/30 border border-emerald-500/40 text-center space-y-2 animate-fade-slide">
+          <div class="w-12 h-12 mx-auto rounded-full bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-500/20">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+            DISBURSEMENT SCHEDULED & LOCKED
+          </span>
+          <h4 class="text-xl font-extrabold text-white">Payout Dispatched: <span id="step3DisbursedAmount" class="font-mono text-emerald-400">$0.00</span></h4>
+          <p id="step3DisbursedSubtitle" class="text-xs text-zinc-300">Sent via PayPal Instant to ••••</p>
+        </div>
+
+        <!-- Official Transaction Details Card -->
+        <div class="p-4 rounded-xl bg-zinc-950 border border-zinc-800 space-y-2.5 text-xs">
+          <div class="flex justify-between">
+            <span class="text-zinc-400">Transaction Reference ID:</span>
+            <span id="step3TxId" class="font-mono font-bold text-white">#PV-75-000000</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-zinc-400">Authenticated Destination:</span>
+            <span id="step3AccountSummary" class="font-mono font-semibold text-emerald-400">PayPal (••••)</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-zinc-400">Estimated Arrival:</span>
+            <span id="step3EtaText" class="font-mono text-zinc-200">Instant / Same-Day</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-zinc-400">Timestamp & Lock Status:</span>
+            <span id="step3Timestamp" class="font-mono text-zinc-300">Locked for 24h</span>
+          </div>
+        </div>
+
+        <!-- Shipping / Drop-Off Label & Packing Slip Instructions -->
+        <div class="p-4 rounded-xl bg-zinc-950/90 border border-purple-500/30 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold uppercase tracking-wider text-purple-300 flex items-center gap-1.5">
+              <span>📦</span> Packing Slip & Insured Drop-Off Instructions
+            </span>
+            <span id="step3TrackingLabel" class="text-[11px] font-mono text-zinc-400">SLIP #PV-SHIP-8821</span>
+          </div>
+          <ol class="text-xs text-zinc-300 space-y-1.5 list-decimal list-inside">
+            <li>Place each card in a <strong class="text-white">penny sleeve + semi-rigid Card Saver I</strong> (or top loader with team bag).</li>
+            <li>Include your printed or handwritten Quote ID (<strong id="step3SlipRef" class="font-mono text-emerald-400">#PV-75-000000</strong>) inside the parcel.</li>
+            <li>Drop off at any USPS / UPS hub or local PokéVault partner desk within <strong class="text-white">48 hours</strong> to maintain locked rate.</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- Footer Actions (Changes per step) -->
+      <div id="quoteModalFooter" class="p-4 bg-zinc-950 border-t border-zinc-800 flex flex-wrap items-center justify-between gap-2.5 shrink-0">
+        <!-- Populated dynamically by renderQuoteModalFooter() -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Share Link & Lot Summary Modal -->
+  <div id="shareModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeShareModal()"></div>
+    <div class="relative w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden">
+      <div class="p-5 border-b border-zinc-800 flex items-center justify-between">
+        <div>
+          <h3 class="text-lg font-extrabold text-white">Share Valuation & Sell Lot</h3>
+          <p class="text-xs text-zinc-400">Send a live link or text summary of your current buylist lot</p>
+        </div>
+        <button type="button" onclick="closeShareModal()" class="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center cursor-pointer">✕</button>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-zinc-300 mb-1.5">Shareable Lot URL</label>
+          <div class="flex items-center gap-2">
+            <input
+              id="shareUrlInput"
+              type="text"
+              readonly
+              class="flex-1 px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-mono text-zinc-300 outline-none"
+            />
+            <button
+              type="button"
+              onclick="copyShareUrl()"
+              class="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-extrabold shrink-0 transition cursor-pointer"
+            >
+              Copy Link
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-zinc-300 mb-1.5">Plain-Text Lot Breakdown (Discord / SMS / DM)</label>
+          <textarea
+            id="shareTextSummary"
+            rows="6"
+            readonly
+            class="w-full p-3 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-mono text-zinc-300 outline-none resize-none"
+          ></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onclick="closeShareModal()"
+            class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-300 cursor-pointer"
+          >
+            Close
+          </button>
+          <button
+            type="button"
+            onclick="copyShareSummaryText()"
+            class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-extrabold transition cursor-pointer"
+          >
+            Copy Text Summary
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
-// ... existing code ... -->
     // =========================================================================
-    // 9. QUOTE / SELL OFFER RECEIPT MODAL & AUTOMATED PAYOUT INTAKE
+    // 1. MULTIPLIERS & CONFIGURATION
     // =========================================================================
-    let currentQuoteId = "";
-    let savedPayoutPreference = {
-      system: "Venmo",
-      customSystem: "",
-      account: "",
-      notes: ""
+    const CONDITION_MULTIPLIERS = {
+      NM: { label: 'Near Mint', short: 'NM', mult: 1.00 },
+      LP: { label: 'Lightly Played', short: 'LP', mult: 0.85 },
+      MP: { label: 'Mod. Played', short: 'MP', mult: 0.70 },
+      HP: { label: 'Heavily Played', short: 'HP', mult: 0.50 },
+      DMG: { label: 'Damaged', short: 'DMG', mult: 0.35 }
     };
 
-    function getResolvedPayoutSystemLabel() {
-      if (savedPayoutPreference.system === "Other") {
-        return savedPayoutPreference.customSystem.trim() || "Other Method";
+    const GRADE_MULTIPLIERS = {
+      RAW: { label: 'Raw / Ungraded', short: 'Raw', mult: 1.00 },
+      PSA9: { label: 'PSA 9 Mint', short: 'PSA 9', mult: 1.45 },
+      BGS95: { label: 'BGS 9.5 Gem', short: 'BGS 9.5', mult: 1.85 },
+      CGC10: { label: 'CGC 10 Pristine', short: 'CGC 10', mult: 2.20 },
+      PSA10: { label: 'PSA 10 Gem Mint', short: 'PSA 10', mult: 2.60 }
+    };
+
+    // =========================================================================
+    // 2. POKÉMON CARD DATABASE (24 ICONIC CARDS ACROSS ALL ERAS)
+    // =========================================================================
+    const DEFAULT_CARD_DATABASE = [
+      // Gengar / Gastly Line
+      {
+        id: 'gengar-vmax-alt',
+        name: 'Gengar VMAX (Alternate Art)',
+        set: 'Fusion Strike',
+        number: '271/264',
+        rarity: 'Secret Rare Alt Art',
+        era: 'Gengar Line',
+        family: ['gengar', 'haunter', 'gastly', 'ghost'],
+        tcg: 345.00,
+        ebay: 332.50,
+        collectr: 350.00,
+        accent: '#a855f7',
+        icon: '👻'
+      },
+      {
+        id: 'gengar-mimikyu-gx-alt',
+        name: 'Gengar & Mimikyu GX (Alt Art)',
+        set: 'Team Up',
+        number: '165/181',
+        rarity: 'Ultra Rare Tag Team Alt',
+        era: 'Gengar Line',
+        family: ['gengar', 'mimikyu', 'tag team', 'ghost'],
+        tcg: 685.00,
+        ebay: 660.00,
+        collectr: 695.00,
+        accent: '#9333ea',
+        icon: '👻'
+      },
+      {
+        id: 'gengar-fossil-holo',
+        name: 'Gengar (1st Edition Holo)',
+        set: 'Fossil',
+        number: '5/62',
+        rarity: 'Holo Rare',
+        era: 'Gengar Line',
+        family: ['gengar', 'haunter', 'gastly', 'wotc', 'vintage'],
+        tcg: 265.00,
+        ebay: 252.00,
+        collectr: 270.00,
+        accent: '#7e22ce',
+        icon: '🔮'
+      },
+      {
+        id: 'sabrinas-gengar-holo',
+        name: "Sabrina's Gengar (Holo)",
+        set: 'Gym Heroes',
+        number: '14/132',
+        rarity: 'Holo Rare',
+        era: 'Gengar Line',
+        family: ['gengar', 'sabrina', 'wotc', 'vintage'],
+        tcg: 158.00,
+        ebay: 149.00,
+        collectr: 162.00,
+        accent: '#a855f7',
+        icon: '🕯️'
+      },
+      {
+        id: 'gastly-ir-tef',
+        name: 'Gastly (Illustration Rare)',
+        set: 'Temporal Forces',
+        number: '177/162',
+        rarity: 'Illustration Rare',
+        era: 'Gengar Line',
+        family: ['gastly', 'haunter', 'gengar', 'ghost'],
+        tcg: 36.50,
+        ebay: 34.00,
+        collectr: 38.00,
+        accent: '#c084fc',
+        icon: '💨'
+      },
+
+      // Modern Alt Arts / SIRs (Sword & Shield / Scarlet & Violet)
+      {
+        id: 'umbreon-vmax-alt',
+        name: 'Umbreon VMAX (Moonbreon Alt Art)',
+        set: 'Evolving Skies',
+        number: '215/203',
+        rarity: 'Secret Rare Alt Art',
+        era: 'Sword & Shield',
+        family: ['umbreon', 'eevee', 'eeveelution', 'moonbreon'],
+        tcg: 1120.00,
+        ebay: 1085.00,
+        collectr: 1140.00,
+        accent: '#eab308',
+        icon: '🌙'
+      },
+      {
+        id: 'rayquaza-vmax-alt',
+        name: 'Rayquaza VMAX (Alternate Art)',
+        set: 'Evolving Skies',
+        number: '218/203',
+        rarity: 'Secret Rare Alt Art',
+        era: 'Sword & Shield',
+        family: ['rayquaza', 'dragon'],
+        tcg: 485.00,
+        ebay: 470.00,
+        collectr: 492.00,
+        accent: '#10b981',
+        icon: '🐉'
+      },
+      {
+        id: 'giratina-v-alt',
+        name: 'Giratina V (Alternate Full Art)',
+        set: 'Lost Origin',
+        number: '186/196',
+        rarity: 'Ultra Rare Alt Art',
+        era: 'Sword & Shield',
+        family: ['giratina', 'ghost', 'dragon'],
+        tcg: 415.00,
+        ebay: 398.00,
+        collectr: 420.00,
+        accent: '#f59e0b',
+        icon: '🌀'
+      },
+      {
+        id: 'lugia-v-alt',
+        name: 'Lugia V (Alternate Full Art)',
+        set: 'Silver Tempest',
+        number: '186/195',
+        rarity: 'Ultra Rare Alt Art',
+        era: 'Sword & Shield',
+        family: ['lugia'],
+        tcg: 215.00,
+        ebay: 204.00,
+        collectr: 218.00,
+        accent: '#38bdf8',
+        icon: '🌊'
+      },
+      {
+        id: 'charizard-ex-151',
+        name: 'Charizard ex (Special Illustration Rare)',
+        set: 'Scarlet & Violet 151',
+        number: '199/165',
+        rarity: 'Special Illustration Rare',
+        era: 'Sword & Shield',
+        family: ['charizard', 'charmander', 'charmeleon'],
+        tcg: 192.00,
+        ebay: 185.00,
+        collectr: 195.00,
+        accent: '#f97316',
+        icon: '🔥'
+      },
+      {
+        id: 'greninja-ex-sir',
+        name: 'Greninja ex (Special Illustration Rare)',
+        set: 'Twilight Masquerade',
+        number: '214/167',
+        rarity: 'Special Illustration Rare',
+        era: 'Sword & Shield',
+        family: ['greninja', 'froakie'],
+        tcg: 310.00,
+        ebay: 298.00,
+        collectr: 315.00,
+        accent: '#3b82f6',
+        icon: '💧'
+      },
+      {
+        id: 'espeon-vmax-alt',
+        name: 'Espeon VMAX (Alternate Art)',
+        set: 'Fusion Strike',
+        number: '270/264',
+        rarity: 'Secret Rare Alt Art',
+        era: 'Sword & Shield',
+        family: ['espeon', 'eevee', 'umbreon'],
+        tcg: 235.00,
+        ebay: 226.00,
+        collectr: 240.00,
+        accent: '#ec4899',
+        icon: '🔮'
+      },
+      {
+        id: 'sylveon-vmax-alt',
+        name: 'Sylveon VMAX (Alternate Art)',
+        set: 'Evolving Skies',
+        number: '212/203',
+        rarity: 'Secret Rare Alt Art',
+        era: 'Sword & Shield',
+        family: ['sylveon', 'eevee', 'umbreon'],
+        tcg: 248.00,
+        ebay: 239.00,
+        collectr: 252.00,
+        accent: '#f472b6',
+        icon: '🎀'
+      },
+      {
+        id: 'mewtwo-vstar-gg',
+        name: 'Mewtwo VSTAR (Galarian Gallery)',
+        set: 'Crown Zenith',
+        number: 'GG44/GG70',
+        rarity: 'Ultra Rare Galarian Gallery',
+        era: 'Sword & Shield',
+        family: ['mewtwo', 'mew', 'charizard'],
+        tcg: 74.00,
+        ebay: 71.50,
+        collectr: 76.00,
+        accent: '#a855f7',
+        icon: '🧬'
+      },
+
+      // WOTC Vintage
+      {
+        id: 'charizard-base-unlimited',
+        name: 'Charizard (Base Set Holo)',
+        set: 'Base Set',
+        number: '4/102',
+        rarity: 'Holo Rare',
+        era: 'WOTC Vintage',
+        family: ['charizard', 'charmander', 'charmeleon', 'base set'],
+        tcg: 395.00,
+        ebay: 375.00,
+        collectr: 410.00,
+        accent: '#ef4444',
+        icon: '🔥'
+      },
+      {
+        id: 'blastoise-base-unlimited',
+        name: 'Blastoise (Base Set Holo)',
+        set: 'Base Set',
+        number: '2/102',
+        rarity: 'Holo Rare',
+        era: 'WOTC Vintage',
+        family: ['blastoise', 'squirtle', 'wartortle', 'base set'],
+        tcg: 145.00,
+        ebay: 138.00,
+        collectr: 150.00,
+        accent: '#3b82f6',
+        icon: '🐢'
+      },
+      {
+        id: 'venusaur-base-unlimited',
+        name: 'Venusaur (Base Set Holo)',
+        set: 'Base Set',
+        number: '15/102',
+        rarity: 'Holo Rare',
+        era: 'WOTC Vintage',
+        family: ['venusaur', 'bulbasaur', 'ivysaur', 'base set'],
+        tcg: 112.00,
+        ebay: 105.00,
+        collectr: 115.00,
+        accent: '#10b981',
+        icon: '🌿'
+      },
+      {
+        id: 'lugia-neo-genesis',
+        name: 'Lugia (Neo Genesis Holo)',
+        set: 'Neo Genesis',
+        number: '9/111',
+        rarity: 'Holo Rare',
+        era: 'WOTC Vintage',
+        family: ['lugia', 'neo'],
+        tcg: 275.00,
+        ebay: 262.00,
+        collectr: 280.00,
+        accent: '#60a5fa',
+        icon: '🌊'
+      },
+      {
+        id: 'umbreon-neo-discovery',
+        name: 'Umbreon (Neo Discovery Holo)',
+        set: 'Neo Discovery',
+        number: '13/75',
+        rarity: 'Holo Rare',
+        era: 'WOTC Vintage',
+        family: ['umbreon', 'eevee', 'neo'],
+        tcg: 225.00,
+        ebay: 215.00,
+        collectr: 230.00,
+        accent: '#facc15',
+        icon: '🌙'
+      },
+
+      // Sun & Moon / Promos
+      {
+        id: 'pikachu-grey-felt-hat',
+        name: 'Pikachu with Grey Felt Hat',
+        set: 'SVP Black Star Promos',
+        number: '085',
+        rarity: 'Van Gogh Museum Promo',
+        era: 'Sun & Moon / Promo',
+        family: ['pikachu', 'van gogh', 'promo'],
+        tcg: 238.00,
+        ebay: 229.00,
+        collectr: 245.00,
+        accent: '#facc15',
+        icon: '🎨'
+      },
+      {
+        id: 'latias-latios-gx-alt',
+        name: 'Latias & Latios GX (Lovebirds Alt)',
+        set: 'Team Up',
+        number: '170/181',
+        rarity: 'Ultra Rare Tag Team Alt',
+        era: 'Sun & Moon / Promo',
+        family: ['latias', 'latios', 'tag team'],
+        tcg: 1450.00,
+        ebay: 1395.00,
+        collectr: 1480.00,
+        accent: '#f43f5e',
+        icon: '💖'
+      },
+      {
+        id: 'mewtwo-mew-gx-promo',
+        name: 'Mewtwo & Mew GX (Alt Promo)',
+        set: 'SM Black Star Promos',
+        number: 'SM191',
+        rarity: 'Black Star Promo',
+        era: 'Sun & Moon / Promo',
+        family: ['mewtwo', 'mew', 'tag team'],
+        tcg: 118.00,
+        ebay: 112.00,
+        collectr: 122.00,
+        accent: '#c084fc',
+        icon: '🧬'
+      },
+      {
+        id: 'bubble-mew-ex-paf',
+        name: 'Mew ex (Bubble Mew SIR)',
+        set: 'Paldean Fates',
+        number: '232/091',
+        rarity: 'Special Illustration Rare',
+        era: 'Sun & Moon / Promo',
+        family: ['mew', 'mewtwo', 'shiny'],
+        tcg: 268.00,
+        ebay: 259.00,
+        collectr: 274.00,
+        accent: '#f472b6',
+        icon: '🫧'
+      },
+      {
+        id: 'pikachu-vmax-rainbow',
+        name: 'Pikachu VMAX (Rainbow Secret)',
+        set: 'Vivid Voltage',
+        number: '188/185',
+        rarity: 'Secret Rainbow Rare',
+        era: 'Sun & Moon / Promo',
+        family: ['pikachu', 'chonkachu'],
+        tcg: 154.00,
+        ebay: 148.00,
+        collectr: 158.00,
+        accent: '#eab308',
+        icon: '⚡'
       }
-      return savedPayoutPreference.system || "Venmo";
-    }
+    ];
 
-    function syncPayoutDetailsToMainForm() {
-      const methodSelect = document.getElementById("sellerPayoutMethod");
-      const handleInput = document.getElementById("sellerPayoutHandle");
-      const resolvedLabel = getResolvedPayoutSystemLabel();
+    // Recent Sales Feed Data
+    const RECENT_SALES_FEED = [
+      {
+        cardId: 'gengar-vmax-alt',
+        source: 'eBay Last Sold',
+        sourceBadgeClass: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+        soldPrice: 335.00,
+        condition: 'NM',
+        grade: 'RAW',
+        timeAgo: '4 mins ago',
+        buyerNote: 'Verified Auction • Free Shipping'
+      },
+      {
+        cardId: 'umbreon-vmax-alt',
+        source: 'TCGPlayer Direct',
+        sourceBadgeClass: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
+        soldPrice: 1125.00,
+        condition: 'NM',
+        grade: 'RAW',
+        timeAgo: '11 mins ago',
+        buyerNote: 'NM Foil • Verified Seller'
+      },
+      {
+        cardId: 'pikachu-grey-felt-hat',
+        source: 'Collectr Comp',
+        sourceBadgeClass: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
+        soldPrice: 242.00,
+        condition: 'NM',
+        grade: 'RAW',
+        timeAgo: '19 mins ago',
+        buyerNote: 'Sealed / NM Index'
+      },
+      {
+        cardId: 'charizard-ex-151',
+        source: 'eBay Last Sold',
+        sourceBadgeClass: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+        soldPrice: 188.50,
+        condition: 'NM',
+        grade: 'RAW',
+        timeAgo: '27 mins ago',
+        buyerNote: 'Buy It Now • Best Offer Accepted'
+      },
+      {
+        cardId: 'gengar-mimikyu-gx-alt',
+        source: 'TCGPlayer Market',
+        sourceBadgeClass: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
+        soldPrice: 689.00,
+        condition: 'NM',
+        grade: 'RAW',
+        timeAgo: '38 mins ago',
+        buyerNote: 'Low Pop Tag Team Alt'
+      },
+      {
+        cardId: 'bubble-mew-ex-paf',
+        source: 'eBay Last Sold',
+        sourceBadgeClass: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+        soldPrice: 264.00,
+        condition: 'NM',
+        grade: 'RAW',
+        timeAgo: '46 mins ago',
+        buyerNote: 'Pack Fresh Centering'
+      }
+    ];
 
-      if (methodSelect) {
-        const optionMap = {
-          "Venmo": "Venmo",
-          "PayPal": "PayPal Goods & Services",
-          "Zelle": "Zelle",
-          "Cash App": "Cash App"
-        };
-        const mappedOption = optionMap[savedPayoutPreference.system];
-        if (mappedOption) {
-          methodSelect.value = mappedOption;
+    // =========================================================================
+    // 3. APPLICATION STATE
+    // =========================================================================
+    const STORAGE_KEY_LOT = 'pokevault_sell_lot_v1';
+    const STORAGE_KEY_CUSTOM = 'pokevault_custom_cards_v1';
+    const STORAGE_KEY_RATE = 'pokevault_payout_rate_v1';
+
+    let cardDatabase = [...DEFAULT_CARD_DATABASE];
+    let sellLot = []; // { uid, cardId, condition, grade, qty }
+    let payoutRate = 75; // 50 - 90
+    let globalCondition = 'NM';
+    let globalGrade = 'RAW';
+    let selectedEra = 'ALL';
+    let sortMode = 'value-desc';
+    let searchQuery = '';
+    let showCatalogGrid = false;
+
+    // Autocomplete popup state
+    let popupMatches = [];
+    let popupActiveIndex = -1;
+
+    // Recent Sales rotation state
+    let recentSalesIndex = 0;
+    let recentSalesTimer = null;
+    let isSalesPaused = false;
+
+    // Quote modal state
+    let selectedPayoutMethod = 'PayPal Instant';
+    let currentQuoteId = '';
+    let quoteStep = 1; // 1 = Review, 2 = Payment Login, 3 = Confirmed
+    let selectedProviderId = 'paypal';
+    let authStage = 'login'; // 'login' | 'verifying' | '2fa' | 'connected'
+    let connectedPayoutAccount = null; // { providerId, providerName, speed, maskedDestination, rawHandle, verifiedAt }
+    let showAuthPassword = false;
+
+    const PAYMENT_PROVIDERS = {
+      paypal: {
+        id: 'paypal',
+        name: 'PayPal',
+        fullName: 'PayPal Instant',
+        speed: 'Instant / Same-Day',
+        badgeBg: 'bg-sky-500/15 text-sky-300 border-sky-500/40',
+        brandColor: '#0070ba',
+        accentText: 'text-sky-400',
+        btnBg: 'bg-[#0070ba] hover:bg-[#005ea6] text-white',
+        icon: '🅿️',
+        requires2FA: true,
+        demoUser: 'trainer.ash@pokevault.io',
+        demoPass: 'Pikachu#1998',
+        demoCode: '482910'
+      },
+      venmo: {
+        id: 'venmo',
+        name: 'Venmo',
+        fullName: 'Venmo Instant',
+        speed: 'Instant Transfer',
+        badgeBg: 'bg-blue-500/15 text-blue-300 border-blue-500/40',
+        brandColor: '#008CFF',
+        accentText: 'text-blue-400',
+        btnBg: 'bg-[#008CFF] hover:bg-[#0074d4] text-white',
+        icon: '💠',
+        requires2FA: true,
+        demoUser: '@AshKetchum-TCG',
+        demoPass: 'GengarVMAX!25',
+        demoCode: '739204'
+      },
+      zelle: {
+        id: 'zelle',
+        name: 'Zelle',
+        fullName: 'Zelle Bank Transfer',
+        speed: 'Instant Bank Wire',
+        badgeBg: 'bg-purple-500/15 text-purple-300 border-purple-500/40',
+        brandColor: '#6d1ed4',
+        accentText: 'text-purple-400',
+        btnBg: 'bg-[#6d1ed4] hover:bg-[#5a16b5] text-white',
+        icon: '⚡',
+        requires2FA: false,
+        banks: ['Chase Bank', 'Bank of America', 'Wells Fargo', 'Capital One', 'Citibank', 'US Bank'],
+        demoUser: 'kanto_collector_88',
+        demoPass: 'CharizardBase#4'
+      },
+      cashapp: {
+        id: 'cashapp',
+        name: 'Cash App',
+        fullName: 'Cash App Instant',
+        speed: 'Instant / No Fee',
+        badgeBg: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40',
+        brandColor: '#00D632',
+        accentText: 'text-emerald-400',
+        btnBg: 'bg-[#00D632] hover:bg-[#00bd2c] text-zinc-950',
+        icon: '💲',
+        requires2FA: true,
+        demoUser: '$PokeVaultSeller',
+        demoPass: '9410',
+        demoCode: '510883'
+      },
+      ach: {
+        id: 'ach',
+        name: 'ACH / Wire',
+        fullName: 'Direct Deposit / ACH Wire',
+        speed: '1–2 Business Days',
+        badgeBg: 'bg-amber-500/15 text-amber-300 border-amber-500/40',
+        brandColor: '#f59e0b',
+        accentText: 'text-amber-400',
+        btnBg: 'bg-amber-500 hover:bg-amber-400 text-zinc-950',
+        icon: '🏦',
+        requires2FA: false,
+        demoBank: 'Chase Checking',
+        demoRouting: '021000021',
+        demoAccount: '4829104938'
+      }
+    };
+
+    // =========================================================================
+    // 4. PERSISTENCE (LOCALSTORAGE)
+    // =========================================================================
+    function loadPersistedState() {
+      try {
+        const savedCustom = localStorage.getItem(STORAGE_KEY_CUSTOM);
+        if (savedCustom) {
+          const parsedCustom = JSON.parse(savedCustom);
+          if (Array.isArray(parsedCustom)) {
+            cardDatabase = [...parsedCustom, ...DEFAULT_CARD_DATABASE];
+          }
         }
-      }
 
-      if (handleInput && savedPayoutPreference.account.trim()) {
-        const suffix = savedPayoutPreference.notes.trim()
-          ? ` (${resolvedLabel} • Note: ${savedPayoutPreference.notes.trim()})`
-          : ` (${resolvedLabel})`;
-        handleInput.value = `${savedPayoutPreference.account.trim()}${suffix}`;
+        const savedLot = localStorage.getItem(STORAGE_KEY_LOT);
+        if (savedLot) {
+          const parsedLot = JSON.parse(savedLot);
+          if (Array.isArray(parsedLot)) {
+            sellLot = parsedLot;
+          }
+        }
+
+        const savedRate = parseInt(localStorage.getItem(STORAGE_KEY_RATE), 10);
+        if (!isNaN(savedRate) && savedRate >= 50 && savedRate <= 90) {
+          payoutRate = savedRate;
+        }
+      } catch (e) {
+        console.warn('Unable to restore local state:', e);
       }
     }
 
-    function highlightPopupSystemPill(systemName) {
-      document.querySelectorAll(".payout-system-pill").forEach(pill => {
-        const active = pill.dataset.payoutSystem === systemName;
-        pill.classList.toggle("bg-emerald-500/20", active);
-        pill.classList.toggle("text-emerald-300", active);
-        pill.classList.toggle("border-emerald-500/50", active);
-        pill.classList.toggle("bg-zinc-950", !active);
-        pill.classList.toggle("text-zinc-200", !active);
-        pill.classList.toggle("border-zinc-800", !active);
+    function persistSellLot() {
+      try {
+        localStorage.setItem(STORAGE_KEY_LOT, JSON.stringify(sellLot));
+      } catch (e) {}
+    }
+
+    function persistCustomCards() {
+      try {
+        const customOnly = cardDatabase.filter(c => c.isCustom);
+        localStorage.setItem(STORAGE_KEY_CUSTOM, JSON.stringify(customOnly));
+      } catch (e) {}
+    }
+
+    function persistPayoutRate() {
+      try {
+        localStorage.setItem(STORAGE_KEY_RATE, String(payoutRate));
+      } catch (e) {}
+    }
+
+    // =========================================================================
+    // 5. PRICING & VALUATION CALCULATIONS
+    // =========================================================================
+    function formatCurrency(val) {
+      const num = Number(val) || 0;
+      return '$' + num.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
       });
     }
 
-    function handlePopupPayoutSystemChange() {
-      const selectEl = document.getElementById("popupPayoutSystemSelect");
-      const customWrapper = document.getElementById("popupCustomSystemWrapper");
-      const accountWrapper = document.getElementById("popupAccountHandleWrapper");
-      const accountLabel = document.getElementById("popupPayoutAccountLabel");
-      const accountInput = document.getElementById("popupPayoutAccountInput");
-      if (!selectEl) return;
+    function getAdjustedCardPricing(card, condition = 'NM', grade = 'RAW', ratePct = payoutRate) {
+      const gradeObj = GRADE_MULTIPLIERS[grade] || GRADE_MULTIPLIERS.RAW;
+      const condObj = CONDITION_MULTIPLIERS[condition] || CONDITION_MULTIPLIERS.NM;
 
-      const selected = selectEl.value;
-      highlightPopupSystemPill(selected);
+      // Graded slabs ignore raw condition multipliers; Raw cards apply condition multiplier
+      const multiplier = grade === 'RAW' ? condObj.mult : gradeObj.mult;
 
-      const isOther = selected === "Other";
-      if (customWrapper) customWrapper.classList.toggle("hidden", !isOther);
-      if (accountWrapper) {
-        accountWrapper.classList.toggle("sm:col-span-2", !isOther);
-        accountWrapper.classList.toggle("sm:col-span-1", isOther);
+      const tcg = (Number(card.tcg) || 0) * multiplier;
+      const ebay = (Number(card.ebay) || tcg) * multiplier;
+      const collectr = (Number(card.collectr) || tcg) * multiplier;
+      const blended = (tcg + ebay + collectr) / 3;
+      const offer = blended * (ratePct / 100);
+
+      return {
+        tcg,
+        ebay,
+        collectr,
+        blended,
+        offer,
+        multiplier
+      };
+    }
+
+    function setPayoutRate(newRate) {
+      const clamped = Math.min(90, Math.max(50, parseInt(newRate, 10) || 75));
+      payoutRate = clamped;
+      persistPayoutRate();
+
+      // Update header, mobile, sidebar & prompt badges
+      document.getElementById('headerLiveBadge').textContent = `${payoutRate}% BUYLIST LIVE`;
+      document.getElementById('headerPayoutBadge').textContent = `${payoutRate}% Cash`;
+      document.getElementById('globalPayoutSlider').value = payoutRate;
+      document.getElementById('mobilePayoutLabel').textContent = `${payoutRate}%`;
+      document.getElementById('mobilePayoutSlider').value = payoutRate;
+      document.getElementById('sidebarRateText').textContent = `${payoutRate}%`;
+      document.getElementById('payoutBoxPct').textContent = `${payoutRate}%`;
+      document.getElementById('executeBtnPct').textContent = `${payoutRate}%`;
+      document.getElementById('mobileDrawerPct').textContent = `${payoutRate}%`;
+
+      document.querySelectorAll('.promptRateText').forEach(el => {
+        el.textContent = `${payoutRate}%`;
+      });
+
+      renderRecentSalesPanel();
+      renderSellLot();
+      if (showCatalogGrid) renderMainCatalogGrid();
+      if (!document.getElementById('similarCardsPopup').classList.contains('hidden')) {
+        renderSimilarPopup(searchQuery);
       }
+      updateCustomCardPreview();
+    }
 
-      const labelsAndPlaceholders = {
-        "Venmo": {
-          label: "Your Venmo @Handle, Email, or Phone *",
-          placeholder: "e.g. @your-venmo-handle"
-        },
-        "PayPal": {
-          label: "Your PayPal Email or paypal.me Link *",
-          placeholder: "e.g. name@email.com or paypal.me/yourname"
-        },
-        "Zelle": {
-          label: "Your Zelle Registered Email or Phone *",
-          placeholder: "e.g. (555) 123-4567 or zelle@email.com"
-        },
-        "Cash App": {
-          label: "Your Cash App $Cashtag *",
-          placeholder: "e.g. $YourCashtag"
-        },
-        "Apple Cash": {
-          label: "Your Apple Cash Phone Number or Apple ID *",
-          placeholder: "e.g. (555) 123-4567 or appleid@icloud.com"
-        },
-        "Other": {
-          label: "Your Payout Handle / Account / Address *",
-          placeholder: "Enter handle, account ID, or payment details"
-        }
+    // =========================================================================
+    // 6. ROTATING MOST RECENT SALES PANEL
+    // =========================================================================
+    function renderRecentSalesPanel() {
+      const body = document.getElementById('recentSalesPanelBody');
+      const dotsContainer = document.getElementById('recentSalesDotButtons');
+      if (!body || !dotsContainer) return;
+
+      const total = RECENT_SALES_FEED.length;
+      const currentSale = RECENT_SALES_FEED[recentSalesIndex % total];
+      const nextSale = RECENT_SALES_FEED[(recentSalesIndex + 1) % total];
+
+      const renderSaleRow = (sale, isSpotlight) => {
+        const card = cardDatabase.find(c => c.id === sale.cardId);
+        if (!card) return '';
+        const pricing = getAdjustedCardPricing(card, sale.condition, sale.grade, payoutRate);
+        const instantOffer = sale.soldPrice * (payoutRate / 100);
+
+        return `
+          <div class="p-3 sm:p-3.5 rounded-xl border transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+            isSpotlight
+              ? 'bg-zinc-950/90 border-emerald-500/35 shadow-inner animate-fade-slide'
+              : 'bg-zinc-950/45 border-zinc-800/70 opacity-85 hover:opacity-100'
+          }">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-lg shrink-0 holo-foil">
+                ${card.icon || '🃏'}
+              </div>
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span class="text-xs sm:text-sm font-extrabold text-white truncate">${escapeHtml(card.name)}</span>
+                  <span class="px-1.5 py-0.5 text-[10px] font-mono rounded border ${sale.sourceBadgeClass}">
+                    ${escapeHtml(sale.source)}
+                  </span>
+                </div>
+                <p class="text-[11px] text-zinc-400 truncate mt-0.5">
+                  ${escapeHtml(card.set)} • #${escapeHtml(card.number)} • <span class="text-zinc-300">${escapeHtml(sale.buyerNote)}</span> • <span class="text-zinc-500">${escapeHtml(sale.timeAgo)}</span>
+                </p>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-800/70">
+              <div class="text-left sm:text-right font-mono">
+                <span class="block text-[10px] uppercase tracking-wider text-zinc-500">Sold Comp: <strong class="text-zinc-200">${formatCurrency(sale.soldPrice)}</strong></span>
+                <span class="block text-xs font-extrabold text-emerald-400">${payoutRate}% Offer: ${formatCurrency(instantOffer)}</span>
+              </div>
+              <button
+                type="button"
+                onclick="addToSellLot('${card.id}', '${sale.condition}', '${sale.grade}')"
+                class="px-3 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500 text-emerald-300 hover:text-zinc-950 border border-emerald-500/35 text-xs font-extrabold transition cursor-pointer shrink-0"
+              >
+                + Add to Lot
+              </button>
+            </div>
+          </div>
+        `;
       };
 
-      const cfg = labelsAndPlaceholders[selected] || labelsAndPlaceholders["Other"];
-      if (accountLabel) accountLabel.textContent = cfg.label;
-      if (accountInput) accountInput.placeholder = cfg.placeholder;
+      body.innerHTML = renderSaleRow(currentSale, true) + renderSaleRow(nextSale, false);
+
+      dotsContainer.innerHTML = RECENT_SALES_FEED.map((_, idx) => {
+        const active = idx === recentSalesIndex;
+        return `
+          <button
+            type="button"
+            onclick="jumpToRecentSale(${idx})"
+            aria-label="Sale ${idx + 1}"
+            class="h-1.5 rounded-full transition-all cursor-pointer ${
+              active ? 'w-5 bg-emerald-400' : 'w-1.5 bg-zinc-700 hover:bg-zinc-500'
+            }"
+          ></button>
+        `;
+      }).join('');
     }
 
-    function selectPopupPayoutSystem(systemName) {
-      const selectEl = document.getElementById("popupPayoutSystemSelect");
-      if (selectEl) {
-        selectEl.value = systemName;
-        handlePopupPayoutSystemChange();
-      }
+    function startRecentSalesRotation() {
+      if (recentSalesTimer) clearInterval(recentSalesTimer);
+      recentSalesTimer = setInterval(() => {
+        if (!isSalesPaused) {
+          recentSalesIndex = (recentSalesIndex + 1) % RECENT_SALES_FEED.length;
+          renderRecentSalesPanel();
+        }
+      }, 4200);
     }
 
-    function openPayoutMethodPopup() {
-      const { totalCashPayout } = getSellLotTotals();
-      const quoteId = document.getElementById("quoteIdDisplay")?.textContent || currentQuoteId || "PV-000000";
-
-      const quoteIdEl = document.getElementById("popupQuoteId");
-      const amountEl = document.getElementById("popupLockedPayoutAmount");
-      if (quoteIdEl) quoteIdEl.textContent = quoteId;
-      if (amountEl) amountEl.textContent = formatCurrency(totalCashPayout);
-
-      const selectEl = document.getElementById("popupPayoutSystemSelect");
-      const customEl = document.getElementById("popupCustomSystemName");
-      const accountEl = document.getElementById("popupPayoutAccountInput");
-      const notesEl = document.getElementById("popupPayoutNotes");
-
-      if (selectEl) selectEl.value = savedPayoutPreference.system || "Venmo";
-      if (customEl) customEl.value = savedPayoutPreference.customSystem || "";
-      if (accountEl) accountEl.value = savedPayoutPreference.account || "";
-      if (notesEl) notesEl.value = savedPayoutPreference.notes || "";
-
-      handlePopupPayoutSystemChange();
-
-      const popup = document.getElementById("payoutMethodPopupModal");
-      if (popup) {
-        popup.classList.remove("hidden");
-        popup.classList.add("flex");
-      }
+    function stepRecentSales(delta) {
+      const total = RECENT_SALES_FEED.length;
+      recentSalesIndex = (recentSalesIndex + delta + total) % total;
+      renderRecentSalesPanel();
     }
 
-    function closePayoutMethodPopup() {
-      const popup = document.getElementById("payoutMethodPopupModal");
-      if (popup) {
-        popup.classList.add("hidden");
-        popup.classList.remove("flex");
-      }
+    function jumpToRecentSale(idx) {
+      recentSalesIndex = idx;
+      renderRecentSalesPanel();
     }
 
-    function submitPreferredPayoutPopup(e) {
-      if (e) e.preventDefault();
-
-      const system = document.getElementById("popupPayoutSystemSelect")?.value || "Venmo";
-      const customSystem = (document.getElementById("popupCustomSystemName")?.value || "").trim();
-      const account = (document.getElementById("popupPayoutAccountInput")?.value || "").trim();
-      const notes = (document.getElementById("popupPayoutNotes")?.value || "").trim();
-
-      if (!account) {
-        showToast("Please enter your payout handle, email, or account.");
-        return;
-      }
-      if (system === "Other" && !customSystem) {
-        showToast("Please enter the name of your preferred payment method.");
-        return;
-      }
-
-      savedPayoutPreference = { system, customSystem, account, notes };
-      syncPayoutDetailsToMainForm();
-      closePayoutMethodPopup();
-
-      const ticketText = buildFormattedTicketText();
-      const previewEl = document.getElementById("confirmedTicketPreview");
-      const panelEl = document.getElementById("confirmedTicketPanel");
-
-      if (previewEl && panelEl) {
-        previewEl.textContent = ticketText;
-        panelEl.classList.remove("hidden");
-        panelEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      }
-
-      try {
-        const existing = JSON.parse(localStorage.getItem("pokevault_tickets") || "[]");
-        existing.unshift({
-          quoteId: currentQuoteId,
-          createdAt: new Date().toISOString(),
-          payoutPreference: savedPayoutPreference,
-          ticket: ticketText
-        });
-        localStorage.setItem("pokevault_tickets", JSON.stringify(existing.slice(0, 20)));
-      } catch (err) {
-        // Ignore storage errors
-      }
-
-      copyTextToClipboard(ticketText);
-      showToast(`${getResolvedPayoutSystemLabel()} payout saved & ticket copied!`);
+    function toggleRecentSalesRotation() {
+      isSalesPaused = !isSalesPaused;
+      const btn = document.getElementById('toggleSalesRotationBtn');
+      const statusText = document.getElementById('recentSalesStatusText');
+      if (btn) btn.textContent = isSalesPaused ? 'Resume' : 'Pause';
+      if (statusText) statusText.textContent = isSalesPaused ? 'Rotation paused' : 'Auto-rotating every 4s';
     }
 
-    function updatePayoutHandlePlaceholder() {
-// ... existing code ... -->
-      const sellerName = (document.getElementById("sellerFullName")?.value || "").trim();
-      const sellerContact = (document.getElementById("sellerContactEmail")?.value || "").trim();
-      const payoutMethod = document.getElementById("sellerPayoutMethod")?.value || "Not selected";
-      const payoutHandle = (document.getElementById("sellerPayoutHandle")?.value || "").trim();
-      const deliveryMethod = document.getElementById("sellerDeliveryMethod")?.value || "Tracked Mail-In";
-      const returnAddress = (document.getElementById("sellerReturnAddress")?.value || "").trim();
+    // =========================================================================
+    // 7. SMART SEARCH AUTOCOMPLETE & EVOLUTION LINE POPUP
+    // =========================================================================
+    function getFilteredCards(queryText, eraFilter = 'ALL') {
+      const q = (queryText || '').trim().toLowerCase();
 
-      const resolvedPreferredSystem = savedPayoutPreference.account.trim()
-        ? `${getResolvedPayoutSystemLabel()} (${savedPayoutPreference.account.trim()}${savedPayoutPreference.notes.trim() ? ` • Note: ${savedPayoutPreference.notes.trim()}` : ""})`
-        : "";
+      let matches = cardDatabase.filter(card => {
+        const matchesEra = eraFilter === 'ALL' || card.era === eraFilter;
+        if (!matchesEra) return false;
+        if (!q) return true;
 
-      const lines = sellLot.map(item => {
-        const cardRate = getCardPayoutRate(item.blendedMarket);
-        const lineMarket = item.blendedMarket * item.qty;
-        const linePayout = lineMarket * (cardRate / 100);
-        const condBadge = item.grade === "RAW" ? item.condition : GRADE_MULTIPLIERS[item.grade].badge;
-        return `• ${item.qty}x ${item.name} [${condBadge}] — Mkt: ${formatCurrency(lineMarket)} | ${cardRate}% Offer: ${formatCurrency(linePayout)}`;
+        const haystack = [
+          card.name,
+          card.set,
+          card.number,
+          card.rarity,
+          card.era,
+          ...(card.family || [])
+        ].join(' ').toLowerCase();
+
+        return q.split(/\s+/).every(token => haystack.includes(token));
       });
 
-      const hasSellerDetails = Boolean(sellerName || sellerContact || payoutHandle || returnAddress || resolvedPreferredSystem);
-      const sellerSection = hasSellerDetails
-        ? [
-            ``,
-            `SELLER & PAYOUT DETAILS`,
-            `----------------------------------------------------`,
-            sellerName || sellerContact ? `Seller: ${sellerName || "Customer"} (${sellerContact || "No contact entered"})` : null,
-            resolvedPreferredSystem ? `Preferred Payout System: ${resolvedPreferredSystem}` : null,
-            `Payout Method: ${payoutMethod}`,
-            payoutHandle ? `Payout Handle/Acct: ${payoutHandle}` : null,
-            `Handoff Method: ${deliveryMethod}`,
-            returnAddress ? `Return Address / City: ${returnAddress}` : null
-          ].filter(Boolean)
-        : [];
-// ... existing code ... -->
-    function confirmSaleSubmission(e) {
-      if (e) e.preventDefault();
+      // Apply current sort mode
+      matches.sort((a, b) => {
+        const valA = getAdjustedCardPricing(a, globalCondition, globalGrade, payoutRate).blended;
+        const valB = getAdjustedCardPricing(b, globalCondition, globalGrade, payoutRate).blended;
+        if (sortMode === 'value-asc') return valA - valB;
+        if (sortMode === 'name-asc') return a.name.localeCompare(b.name);
+        return valB - valA;
+      });
 
-      const currentHandle = (document.getElementById("sellerPayoutHandle")?.value || "").trim();
-      const currentMethod = document.getElementById("sellerPayoutMethod")?.value || "Venmo";
-      if (!savedPayoutPreference.account.trim() && currentHandle) {
-        savedPayoutPreference = {
-          system: currentMethod.includes("PayPal") ? "PayPal" : currentMethod,
-          customSystem: "",
-          account: currentHandle,
-          notes: ""
+      return matches;
+    }
+
+    function renderSimilarPopup(queryText) {
+      const popup = document.getElementById('similarCardsPopup');
+      const body = document.getElementById('similarCardsPopupBody');
+      const countEl = document.getElementById('popupMatchCount');
+      const titleEl = document.getElementById('popupHeaderTitle');
+
+      popupMatches = getFilteredCards(queryText, 'ALL');
+      popupActiveIndex = popupMatches.length > 0 ? 0 : -1;
+
+      countEl.textContent = `${popupMatches.length} found`;
+      titleEl.textContent = queryText.trim()
+        ? `Matches for "${queryText.trim()}"`
+        : 'Top High-Demand Buylist Cards';
+
+      if (popupMatches.length === 0) {
+        body.innerHTML = `
+          <div class="p-6 text-center space-y-2">
+            <p class="text-xs font-semibold text-zinc-300">No cards matched "${escapeHtml(queryText)}" in the built-in index.</p>
+            <button
+              type="button"
+              onclick="closeSimilarPopup(); openCustomCardModal();"
+              class="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold cursor-pointer"
+            >
+              + Add "${escapeHtml(queryText)}" as Custom Card
+            </button>
+          </div>
+        `;
+      } else {
+        body.innerHTML = popupMatches.slice(0, 12).map((card, idx) => {
+          const pricing = getAdjustedCardPricing(card, globalCondition, globalGrade, payoutRate);
+          const gradeTag = globalGrade === 'RAW'
+            ? CONDITION_MULTIPLIERS[globalCondition].short
+            : GRADE_MULTIPLIERS[globalGrade].short;
+
+          return `
+            <div
+              data-popup-idx="${idx}"
+              class="popup-match-row px-4 py-3 hover:bg-zinc-900/90 transition flex items-center justify-between gap-3 cursor-pointer ${
+                idx === popupActiveIndex ? 'bg-zinc-900/90' : ''
+              }"
+              onclick="focusCardFromPopup('${card.id}')"
+            >
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-9 h-9 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-base shrink-0">
+                  ${card.icon || '🃏'}
+                </div>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-xs sm:text-sm font-bold text-white truncate">${escapeHtml(card.name)}</span>
+                    <span class="px-1.5 py-0.2 text-[10px] font-mono rounded bg-zinc-800 text-zinc-300 shrink-0">${gradeTag}</span>
+                  </div>
+                  <p class="text-[11px] text-zinc-400 truncate">${escapeHtml(card.set)} • #${escapeHtml(card.number)} • <span class="text-zinc-500">${escapeHtml(card.rarity)}</span></p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-3 shrink-0">
+                <div class="text-right font-mono">
+                  <span class="block text-[10px] text-zinc-500">Mkt: ${formatCurrency(pricing.blended)}</span>
+                  <span class="block text-xs sm:text-sm font-extrabold text-emerald-400">${formatCurrency(pricing.offer)}</span>
+                </div>
+                <button
+                  type="button"
+                  onclick="event.stopPropagation(); addToSellLot('${card.id}', globalCondition, globalGrade);"
+                  class="px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-extrabold transition cursor-pointer"
+                >
+                  + Lot
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      popup.classList.remove('hidden');
+    }
+
+    function updatePopupHighlight() {
+      document.querySelectorAll('.popup-match-row').forEach((row, idx) => {
+        row.classList.toggle('bg-zinc-900/90', idx === popupActiveIndex);
+        if (idx === popupActiveIndex) {
+          row.scrollIntoView({ block: 'nearest' });
+        }
+      });
+    }
+
+    function closeSimilarPopup() {
+      document.getElementById('similarCardsPopup').classList.add('hidden');
+    }
+
+    function clearSearch() {
+      const input = document.getElementById('searchInput');
+      input.value = '';
+      searchQuery = '';
+      document.getElementById('clearSearchBtn').classList.add('hidden');
+      closeSimilarPopup();
+      if (selectedEra === 'ALL') {
+        showCatalogGrid = false;
+        document.getElementById('activeResultsSection').classList.add('hidden');
+        document.getElementById('searchPromptSection').classList.remove('hidden');
+      } else {
+        renderMainCatalogGrid();
+      }
+    }
+
+    function triggerQuickPokemonSearch(pokemonName) {
+      const input = document.getElementById('searchInput');
+      input.value = pokemonName;
+      searchQuery = pokemonName;
+      document.getElementById('clearSearchBtn').classList.remove('hidden');
+      selectedEra = 'ALL';
+      updateEraPillStyles();
+      showCatalogGrid = true;
+      closeSimilarPopup();
+      renderMainCatalogGrid();
+    }
+
+    function focusCardFromPopup(cardId) {
+      const card = cardDatabase.find(c => c.id === cardId);
+      if (!card) return;
+      const input = document.getElementById('searchInput');
+      input.value = card.name;
+      searchQuery = card.name;
+      document.getElementById('clearSearchBtn').classList.remove('hidden');
+      selectedEra = 'ALL';
+      updateEraPillStyles();
+      showCatalogGrid = true;
+      closeSimilarPopup();
+      renderMainCatalogGrid();
+    }
+
+    function applyPopupToMainGrid() {
+      selectedEra = 'ALL';
+      updateEraPillStyles();
+      showCatalogGrid = true;
+      closeSimilarPopup();
+      renderMainCatalogGrid();
+    }
+
+    // =========================================================================
+    // 8. MAIN CATALOG RESULTS GRID
+    // =========================================================================
+    function updateEraPillStyles() {
+      document.querySelectorAll('.era-pill').forEach(btn => {
+        const isActive = btn.getAttribute('data-era') === selectedEra;
+        if (isActive) {
+          btn.className = 'era-pill active px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 text-white transition cursor-pointer';
+        } else {
+          btn.className = 'era-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800 transition cursor-pointer';
+        }
+      });
+    }
+
+    function showFullCatalogGrid() {
+      selectedEra = 'ALL';
+      searchQuery = '';
+      document.getElementById('searchInput').value = '';
+      document.getElementById('clearSearchBtn').classList.add('hidden');
+      updateEraPillStyles();
+      showCatalogGrid = true;
+      renderMainCatalogGrid();
+    }
+
+    function resetAllFiltersToPrompt() {
+      selectedEra = 'ALL';
+      searchQuery = '';
+      document.getElementById('searchInput').value = '';
+      document.getElementById('clearSearchBtn').classList.add('hidden');
+      updateEraPillStyles();
+      showCatalogGrid = false;
+      document.getElementById('activeResultsSection').classList.add('hidden');
+      document.getElementById('searchPromptSection').classList.remove('hidden');
+    }
+
+    function renderMainCatalogGrid() {
+      const resultsSection = document.getElementById('activeResultsSection');
+      const promptSection = document.getElementById('searchPromptSection');
+      const gridContainer = document.getElementById('cardsGridContainer');
+      const countBadge = document.getElementById('resultsCountBadge');
+      const titleEl = document.getElementById('resultsSectionTitle');
+
+      const cards = getFilteredCards(searchQuery, selectedEra);
+
+      promptSection.classList.add('hidden');
+      resultsSection.classList.remove('hidden');
+      countBadge.textContent = `${cards.length} card${cards.length === 1 ? '' : 's'}`;
+
+      if (searchQuery.trim()) {
+        titleEl.textContent = `Results for "${searchQuery.trim()}"`;
+      } else if (selectedEra !== 'ALL') {
+        titleEl.textContent = `${selectedEra} Index`;
+      } else {
+        titleEl.textContent = 'Full Buylist Index';
+      }
+
+      if (cards.length === 0) {
+        gridContainer.innerHTML = `
+          <div class="col-span-full bg-zinc-900/60 border border-zinc-800 rounded-2xl p-8 text-center space-y-3">
+            <p class="text-sm font-bold text-zinc-200">No cards found matching your filter criteria.</p>
+            <div class="flex items-center justify-center gap-2">
+              <button type="button" onclick="resetAllFiltersToPrompt()" class="px-3.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-200 cursor-pointer">Reset Filters</button>
+              <button type="button" onclick="openCustomCardModal()" class="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-xs font-bold text-white cursor-pointer">+ Add Custom Card</button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      gridContainer.innerHTML = cards.map(card => {
+        const pricing = getAdjustedCardPricing(card, globalCondition, globalGrade, payoutRate);
+        const tagLabel = globalGrade === 'RAW'
+          ? `${CONDITION_MULTIPLIERS[globalCondition].label} (Raw)`
+          : GRADE_MULTIPLIERS[globalGrade].label;
+
+        return `
+          <article class="bg-zinc-900/85 hover:bg-zinc-900 border border-zinc-800/90 hover:border-purple-500/40 rounded-2xl p-4 shadow-lg transition flex flex-col justify-between gap-3.5 animate-fade-slide">
+            <!-- Top Row: Card Art Badge + Title + Set -->
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-start gap-3 min-w-0">
+                <div class="w-12 h-14 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-center text-2xl shrink-0 holo-foil shadow-inner">
+                  ${card.icon || '🃏'}
+                </div>
+                <div class="min-w-0">
+                  <div class="flex flex-wrap items-center gap-1.5">
+                    <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                      ${escapeHtml(card.era)}
+                    </span>
+                    ${card.isCustom ? '<span class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">CUSTOM</span>' : ''}
+                  </div>
+                  <h4 class="text-sm sm:text-base font-extrabold text-white mt-1 leading-snug">${escapeHtml(card.name)}</h4>
+                  <p class="text-xs text-zinc-400 mt-0.5">${escapeHtml(card.set)} • <span class="font-mono text-zinc-300">#${escapeHtml(card.number)}</span></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3-Source Market Comps Grid -->
+            <div class="grid grid-cols-3 gap-2 p-2.5 rounded-xl bg-zinc-950/90 border border-zinc-800/80 text-center font-mono">
+              <div>
+                <span class="block text-[10px] uppercase text-sky-400 font-semibold">TCGPlayer</span>
+                <span class="text-xs font-bold text-zinc-200">${formatCurrency(pricing.tcg)}</span>
+              </div>
+              <div class="border-x border-zinc-800/80">
+                <span class="block text-[10px] uppercase text-amber-400 font-semibold">eBay Sold</span>
+                <span class="text-xs font-bold text-zinc-200">${formatCurrency(pricing.ebay)}</span>
+              </div>
+              <div>
+                <span class="block text-[10px] uppercase text-purple-400 font-semibold">Collectr</span>
+                <span class="text-xs font-bold text-zinc-200">${formatCurrency(pricing.collectr)}</span>
+              </div>
+            </div>
+
+            <!-- Blended Market & Buyout Action Footer -->
+            <div class="pt-1 flex items-center justify-between gap-2">
+              <div>
+                <span class="block text-[10px] uppercase tracking-wider text-zinc-500">
+                  Blended (${escapeHtml(tagLabel)}): <strong class="font-mono text-zinc-300">${formatCurrency(pricing.blended)}</strong>
+                </span>
+                <div class="flex items-baseline gap-1.5 mt-0.5">
+                  <span class="text-lg font-mono font-extrabold text-emerald-400">${formatCurrency(pricing.offer)}</span>
+                  <span class="text-[11px] font-mono font-bold text-emerald-500/90">(${payoutRate}% Cash)</span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onclick="addToSellLot('${card.id}', globalCondition, globalGrade)"
+                class="px-3.5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-zinc-950 text-xs font-extrabold shadow-lg shadow-emerald-500/15 transition cursor-pointer shrink-0"
+              >
+                + Add to ${payoutRate}% Sell Lot
+              </button>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    // =========================================================================
+    // 9. INSTANT SELL LOT SIDEBAR & MOBILE DRAWER
+    // =========================================================================
+    function addToSellLot(cardId, condition = globalCondition, grade = globalGrade) {
+      const card = cardDatabase.find(c => c.id === cardId);
+      if (!card) return;
+
+      const effectiveCond = grade === 'RAW' ? condition : 'NM';
+      const existing = sellLot.find(
+        item => item.cardId === cardId && item.condition === effectiveCond && item.grade === grade
+      );
+
+      if (existing) {
+        existing.qty += 1;
+      } else {
+        sellLot.unshift({
+          uid: 'lot_' + Math.random().toString(36).slice(2, 9),
+          cardId,
+          condition: effectiveCond,
+          grade,
+          qty: 1
+        });
+      }
+
+      persistSellLot();
+      renderSellLot();
+      showToast(`Added ${card.name} to ${payoutRate}% Sell Lot`);
+    }
+
+    function updateLotItemQty(uid, delta) {
+      const idx = sellLot.findIndex(i => i.uid === uid);
+      if (idx === -1) return;
+      sellLot[idx].qty += delta;
+      if (sellLot[idx].qty <= 0) {
+        sellLot.splice(idx, 1);
+      }
+      persistSellLot();
+      renderSellLot();
+    }
+
+    function updateLotItemCondition(uid, newCond) {
+      const item = sellLot.find(i => i.uid === uid);
+      if (!item) return;
+      item.condition = newCond;
+      persistSellLot();
+      renderSellLot();
+    }
+
+    function updateLotItemGrade(uid, newGrade) {
+      const item = sellLot.find(i => i.uid === uid);
+      if (!item) return;
+      item.grade = newGrade;
+      persistSellLot();
+      renderSellLot();
+    }
+
+    function removeLotItem(uid) {
+      sellLot = sellLot.filter(i => i.uid !== uid);
+      persistSellLot();
+      renderSellLot();
+    }
+
+    function clearSellLot() {
+      sellLot = [];
+      persistSellLot();
+      renderSellLot();
+    }
+
+    function renderSellLot() {
+      const desktopContainer = document.getElementById('sellLotItemsContainer');
+      const mobileContainer = document.getElementById('mobileLotItemsContainer');
+      const emptyPlaceholder = document.getElementById('emptyLotPlaceholder');
+
+      let totalCount = 0;
+      let tcgTotal = 0;
+      let ebayTotal = 0;
+      let collectrTotal = 0;
+      let marketTotal = 0;
+      let payoutTotal = 0;
+
+      // Remove stale valid cards if any
+      sellLot = sellLot.filter(item => cardDatabase.some(c => c.id === item.cardId));
+
+      if (sellLot.length === 0) {
+        if (emptyPlaceholder) emptyPlaceholder.classList.remove('hidden');
+        desktopContainer.innerHTML = '';
+        if (emptyPlaceholder) desktopContainer.appendChild(emptyPlaceholder);
+        mobileContainer.innerHTML = `
+          <div class="text-center py-10 text-xs text-zinc-400">
+            Your Sell Lot is currently empty. Add cards from the search bar or recent sales ticker.
+          </div>
+        `;
+      } else {
+        const itemsHtml = sellLot.map(item => {
+          const card = cardDatabase.find(c => c.id === item.cardId);
+          if (!card) return '';
+          const pricing = getAdjustedCardPricing(card, item.condition, item.grade, payoutRate);
+
+          totalCount += item.qty;
+          tcgTotal += pricing.tcg * item.qty;
+          ebayTotal += pricing.ebay * item.qty;
+          collectrTotal += pricing.collectr * item.qty;
+          marketTotal += pricing.blended * item.qty;
+          payoutTotal += pricing.offer * item.qty;
+
+          const condOptions = Object.entries(CONDITION_MULTIPLIERS).map(([key, obj]) =>
+            `<option value="${key}" ${item.condition === key ? 'selected' : ''}>${obj.short}</option>`
+          ).join('');
+
+          const gradeOptions = Object.entries(GRADE_MULTIPLIERS).map(([key, obj]) =>
+            `<option value="${key}" ${item.grade === key ? 'selected' : ''}>${obj.short}</option>`
+          ).join('');
+
+          return `
+            <div class="p-3 rounded-xl bg-zinc-950 border border-zinc-800/90 space-y-2">
+              <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0">
+                  <p class="text-xs font-extrabold text-white truncate">${escapeHtml(card.name)}</p>
+                  <p class="text-[11px] text-zinc-500 truncate">${escapeHtml(card.set)} • #${escapeHtml(card.number)}</p>
+                </div>
+                <button
+                  type="button"
+                  onclick="removeLotItem('${item.uid}')"
+                  title="Remove from lot"
+                  class="text-zinc-500 hover:text-rose-400 text-xs px-1 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div class="flex items-center justify-between gap-2 pt-1">
+                <div class="flex items-center gap-1.5">
+                  <select
+                    aria-label="Item Grade"
+                    onchange="updateLotItemGrade('${item.uid}', this.value)"
+                    class="px-2 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-200 outline-none cursor-pointer"
+                  >
+                    ${gradeOptions}
+                  </select>
+                  <select
+                    aria-label="Item Condition"
+                    ${item.grade !== 'RAW' ? 'disabled' : ''}
+                    onchange="updateLotItemCondition('${item.uid}', this.value)"
+                    class="px-2 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-200 outline-none cursor-pointer disabled:opacity-40"
+                  >
+                    ${condOptions}
+                  </select>
+                </div>
+
+                <!-- Qty Stepper -->
+                <div class="flex items-center gap-1 bg-zinc-900 border border-zinc-800 rounded-lg px-1 py-0.5">
+                  <button type="button" onclick="updateLotItemQty('${item.uid}', -1)" class="w-5 h-5 rounded hover:bg-zinc-800 text-zinc-300 text-xs font-bold cursor-pointer">−</button>
+                  <span class="px-1.5 text-xs font-mono font-bold text-white">${item.qty}</span>
+                  <button type="button" onclick="updateLotItemQty('${item.uid}', 1)" class="w-5 h-5 rounded hover:bg-zinc-800 text-zinc-300 text-xs font-bold cursor-pointer">+</button>
+                </div>
+              </div>
+
+              <div class="pt-1.5 border-t border-zinc-800/70 flex items-center justify-between text-[11px] font-mono">
+                <span class="text-zinc-500">Mkt: ${formatCurrency(pricing.blended * item.qty)}</span>
+                <span class="font-extrabold text-emerald-400">${payoutRate}% Offer: ${formatCurrency(pricing.offer * item.qty)}</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        desktopContainer.innerHTML = itemsHtml;
+        mobileContainer.innerHTML = itemsHtml;
+      }
+
+      // Update Totals & Badges
+      document.getElementById('lotItemCountBadge').textContent = totalCount;
+      document.getElementById('mobileLotCountBadge').textContent = totalCount;
+      document.getElementById('mobileDrawerCount').textContent = totalCount;
+
+      document.getElementById('lotTcgTotal').textContent = formatCurrency(tcgTotal);
+      document.getElementById('lotEbayTotal').textContent = formatCurrency(ebayTotal);
+      document.getElementById('lotCollectrTotal').textContent = formatCurrency(collectrTotal);
+      document.getElementById('lotMarketTotal').textContent = formatCurrency(marketTotal);
+      document.getElementById('lotCashPayout').textContent = formatCurrency(payoutTotal);
+
+      document.getElementById('mobileLotMarket').textContent = formatCurrency(marketTotal);
+      document.getElementById('mobileLotPayout').textContent = formatCurrency(payoutTotal);
+
+      const feeNote = document.getElementById('feeAdvantageNote');
+      const feeSavedEl = document.getElementById('feeSavedAmount');
+      if (marketTotal > 0) {
+        feeNote.classList.remove('hidden');
+        feeSavedEl.textContent = formatCurrency(marketTotal * 0.1325 + 4.50);
+      } else {
+        feeNote.classList.add('hidden');
+      }
+
+      const execBtn = document.getElementById('executeOfferBtn');
+      const mobileExecBtn = document.getElementById('mobileExecuteOfferBtn');
+      const hasItems = totalCount > 0;
+      execBtn.disabled = !hasItems;
+      if (mobileExecBtn) mobileExecBtn.disabled = !hasItems;
+    }
+
+    // =========================================================================
+    // 10. MOBILE LOT DRAWER TOGGLE
+    // =========================================================================
+    function toggleMobileLot() {
+      const drawer = document.getElementById('mobileLotDrawer');
+      drawer.classList.toggle('hidden');
+    }
+
+    // =========================================================================
+    // 11. CUSTOM CARD MODAL
+    // =========================================================================
+    function openCustomCardModal() {
+      const modal = document.getElementById('customCardModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      updateCustomCardPreview();
+    }
+
+    function closeCustomCardModal() {
+      const modal = document.getElementById('customCardModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function updateCustomCardPreview() {
+      const tcgInput = document.getElementById('customTcg');
+      const ebayInput = document.getElementById('customEbay');
+      const collectrInput = document.getElementById('customCollectr');
+      const condInput = document.getElementById('customCondition');
+      const gradeInput = document.getElementById('customGrade');
+      if (!tcgInput) return;
+
+      const tcg = parseFloat(tcgInput.value) || 0;
+      const ebay = parseFloat(ebayInput.value) || tcg;
+      const collectr = parseFloat(collectrInput.value) || tcg;
+
+      const tempCard = { tcg, ebay, collectr };
+      const pricing = getAdjustedCardPricing(tempCard, condInput.value, gradeInput.value, payoutRate);
+
+      document.getElementById('customPreviewMarket').textContent = formatCurrency(pricing.blended);
+      document.getElementById('customPreviewOffer').textContent = formatCurrency(pricing.offer);
+    }
+
+    function handleCustomCardSubmit(event) {
+      event.preventDefault();
+      const name = document.getElementById('customName').value.trim();
+      const set = document.getElementById('customSet').value.trim();
+      const number = document.getElementById('customNumber').value.trim() || 'PROMO';
+      const rarity = document.getElementById('customRarity').value;
+      const era = document.getElementById('customEra').value;
+
+      const tcg = parseFloat(document.getElementById('customTcg').value) || 0;
+      const ebay = parseFloat(document.getElementById('customEbay').value) || tcg;
+      const collectr = parseFloat(document.getElementById('customCollectr').value) || tcg;
+
+      const cond = document.getElementById('customCondition').value;
+      const grade = document.getElementById('customGrade').value;
+      const addToLot = document.getElementById('customAddToLotCheck').checked;
+
+      const newCard = {
+        id: 'custom_' + Date.now(),
+        name,
+        set,
+        number,
+        rarity,
+        era,
+        family: name.toLowerCase().split(/\s+/),
+        tcg,
+        ebay,
+        collectr,
+        accent: '#a855f7',
+        icon: '✨',
+        isCustom: true
+      };
+
+      cardDatabase.unshift(newCard);
+      persistCustomCards();
+      closeCustomCardModal();
+      document.getElementById('customCardForm').reset();
+
+      if (addToLot) {
+        addToSellLot(newCard.id, cond, grade);
+      } else {
+        showToast(`Added "${name}" to Buylist Index`);
+      }
+
+      if (showCatalogGrid) {
+        renderMainCatalogGrid();
+      }
+    }
+
+    // =========================================================================
+    // 12. EXECUTE 75% SELL OFFER & 3-STEP PAYOUT MODAL
+    // =========================================================================
+    function getLotFinancialSummary() {
+      let totalCards = 0;
+      let totalMarket = 0;
+      let totalPayout = 0;
+
+      sellLot.forEach(item => {
+        const card = cardDatabase.find(c => c.id === item.cardId);
+        if (!card) return;
+        const pricing = getAdjustedCardPricing(card, item.condition, item.grade, payoutRate);
+        totalCards += item.qty;
+        totalMarket += pricing.blended * item.qty;
+        totalPayout += pricing.offer * item.qty;
+      });
+
+      return { totalCards, totalMarket, totalPayout };
+    }
+
+    function openQuoteModal() {
+      if (sellLot.length === 0) return;
+
+      currentQuoteId = `PV-${payoutRate}-` + Math.floor(100000 + Math.random() * 900000);
+      const nowStr = new Date().toLocaleString('en-US', {
+        month: 'short', day: 'numeric', year: 'numeric',
+        hour: 'numeric', minute: '2-digit'
+      });
+
+      document.getElementById('quoteReferenceId').textContent = '#' + currentQuoteId;
+      document.getElementById('quoteTimestamp').textContent = `Generated ${nowStr} • Valid for 24 hours`;
+
+      const { totalCards, totalMarket, totalPayout } = getLotFinancialSummary();
+
+      const rowsHtml = sellLot.map(item => {
+        const card = cardDatabase.find(c => c.id === item.cardId);
+        if (!card) return '';
+        const pricing = getAdjustedCardPricing(card, item.condition, item.grade, payoutRate);
+        const lineMarket = pricing.blended * item.qty;
+        const lineOffer = pricing.offer * item.qty;
+
+        const gradeText = item.grade === 'RAW'
+          ? `Raw (${CONDITION_MULTIPLIERS[item.condition].short})`
+          : GRADE_MULTIPLIERS[item.grade].short;
+
+        return `
+          <div class="px-4 py-3 flex items-center justify-between gap-3 text-xs">
+            <div class="min-w-0">
+              <p class="font-bold text-white truncate">${escapeHtml(card.name)}</p>
+              <p class="text-[11px] text-zinc-400">${escapeHtml(card.set)} (#${escapeHtml(card.number)}) • <span class="text-purple-300 font-mono">${gradeText}</span></p>
+            </div>
+            <div class="text-right font-mono shrink-0">
+              <span class="text-zinc-400">${item.qty} × ${formatCurrency(pricing.blended)}</span>
+              <span class="block font-extrabold text-emerald-400">${formatCurrency(lineOffer)}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('quoteReceiptItems').innerHTML = rowsHtml;
+      document.getElementById('quoteTotalCards').textContent = `${totalCards} card${totalCards === 1 ? '' : 's'}`;
+      document.getElementById('quoteMarketTotal').textContent = formatCurrency(totalMarket);
+      document.getElementById('quoteRateApplied').textContent = `${payoutRate}% Instant Cash`;
+      document.getElementById('quoteNetPayout').textContent = formatCurrency(totalPayout);
+      document.getElementById('step2PayoutBadge').textContent = formatCurrency(totalPayout);
+
+      setQuoteStep(1);
+
+      const modal = document.getElementById('quoteModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeQuoteModal() {
+      const modal = document.getElementById('quoteModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function setQuoteStep(step) {
+      quoteStep = step;
+
+      const step1Body = document.getElementById('quoteStep1Body');
+      const step2Body = document.getElementById('quoteStep2Body');
+      const step3Body = document.getElementById('quoteStep3Body');
+
+      step1Body.classList.toggle('hidden', step !== 1);
+      step2Body.classList.toggle('hidden', step !== 2);
+      step3Body.classList.toggle('hidden', step !== 3);
+
+      // Update Stepper Pills
+      [1, 2, 3].forEach(s => {
+        const el = document.getElementById(`stepperStep${s}`);
+        const badge = el.querySelector('span:first-child');
+        if (s < step) {
+          el.className = 'flex items-center gap-2 text-emerald-400';
+          badge.className = 'w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-mono font-extrabold flex items-center justify-center text-[11px]';
+          badge.textContent = '✓';
+        } else if (s === step) {
+          el.className = 'flex items-center gap-2 text-emerald-400 font-bold';
+          badge.className = 'w-5 h-5 rounded-full bg-emerald-500 text-zinc-950 font-mono font-extrabold flex items-center justify-center text-[11px]';
+          badge.textContent = String(s);
+        } else {
+          el.className = 'flex items-center gap-2 text-zinc-500';
+          badge.className = 'w-5 h-5 rounded-full bg-zinc-800 text-zinc-400 font-mono font-extrabold flex items-center justify-center text-[11px]';
+          badge.textContent = String(s);
+        }
+      });
+
+      const titleEl = document.getElementById('quoteModalTitle');
+      const statusBadge = document.getElementById('quoteStatusBadge');
+
+      if (step === 1) {
+        titleEl.textContent = 'Instant Buyout Offer Review';
+        statusBadge.textContent = 'LOCKED BUYLIST QUOTE';
+      } else if (step === 2) {
+        titleEl.textContent = 'Connect Payout Account';
+        statusBadge.textContent = 'OFFER ACCEPTED • STEP 2 OF 3';
+        renderPaymentProviderCards();
+        renderPaymentAuthPanel();
+      } else if (step === 3) {
+        titleEl.textContent = 'Official Buyback & Payout Receipt';
+        statusBadge.textContent = 'PAYOUT DISPATCHED';
+        populateStep3Confirmation();
+      }
+
+      renderQuoteModalFooter();
+    }
+
+    function renderPaymentProviderCards() {
+      const grid = document.getElementById('paymentProviderGrid');
+      grid.innerHTML = Object.values(PAYMENT_PROVIDERS).map(p => {
+        const isSelected = p.id === selectedProviderId;
+        const isConnectedThis = connectedPayoutAccount && connectedPayoutAccount.providerId === p.id;
+        return `
+          <button
+            type="button"
+            onclick="selectPaymentProvider('${p.id}')"
+            class="p-2.5 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between gap-1.5 ${
+              isSelected
+                ? 'bg-zinc-950 border-emerald-400 ring-1 ring-emerald-400/50 shadow-lg'
+                : 'bg-zinc-950/70 border-zinc-800 hover:border-zinc-700'
+            }"
+          >
+            <div class="flex items-center justify-between">
+              <span class="text-base">${p.icon}</span>
+              ${isConnectedThis ? '<span class="w-2 h-2 rounded-full bg-emerald-400"></span>' : ''}
+            </div>
+            <div>
+              <span class="block text-xs font-extrabold text-white">${p.name}</span>
+              <span class="block text-[10px] text-zinc-400 leading-tight mt-0.5">${p.speed}</span>
+            </div>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function selectPaymentProvider(providerId) {
+      if (selectedProviderId === providerId) return;
+      selectedProviderId = providerId;
+      showAuthPassword = false;
+      if (connectedPayoutAccount && connectedPayoutAccount.providerId === providerId) {
+        authStage = 'connected';
+      } else {
+        authStage = 'login';
+      }
+      renderPaymentProviderCards();
+      renderPaymentAuthPanel();
+      renderQuoteModalFooter();
+    }
+
+    function renderPaymentAuthPanel() {
+      const container = document.getElementById('paymentAuthContainer');
+      const p = PAYMENT_PROVIDERS[selectedProviderId];
+
+      // 1. CONNECTED STATE
+      if (authStage === 'connected' && connectedPayoutAccount && connectedPayoutAccount.providerId === p.id) {
+        container.innerHTML = `
+          <div class="p-4 sm:p-5 bg-gradient-to-r from-emerald-950/40 via-zinc-950 to-zinc-950 space-y-3 animate-fade-slide">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center text-xl">
+                  ${p.icon}
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-extrabold text-white">${escapeHtml(p.fullName)} Connected</span>
+                    <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">VERIFIED</span>
+                  </div>
+                  <p class="text-xs font-mono text-emerald-400 mt-0.5">Destination: ${escapeHtml(connectedPayoutAccount.maskedDestination)}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onclick="disconnectPayoutAccount()"
+                class="px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-xs font-semibold text-zinc-300 transition cursor-pointer"
+              >
+                Switch Account
+              </button>
+            </div>
+            <div class="pt-2.5 border-t border-zinc-800/80 flex flex-wrap items-center justify-between gap-2 text-[11px] text-zinc-400">
+              <span>OAuth Session Token Active • 256-bit TLS Encrypted</span>
+              <span class="font-mono text-zinc-300">Speed: ${escapeHtml(p.speed)}</span>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      // 2. VERIFYING SPINNER STATE
+      if (authStage === 'verifying') {
+        container.innerHTML = `
+          <div class="p-8 text-center space-y-3">
+            <div class="w-10 h-10 mx-auto rounded-full border-2 border-emerald-400 border-t-transparent animate-spin"></div>
+            <p class="text-sm font-bold text-white">Authenticating with ${escapeHtml(p.name)}...</p>
+            <p class="text-xs text-zinc-400">Establishing secure OAuth payout handshake & verifying recipient eligibility</p>
+          </div>
+        `;
+        return;
+      }
+
+      // 3. TWO-FACTOR / SMS VERIFICATION STATE
+      if (authStage === '2fa') {
+        container.innerHTML = `
+          <form onsubmit="handleVerify2FASubmit(event)" class="p-4 sm:p-5 space-y-4 animate-fade-slide">
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <div class="flex items-center gap-2.5">
+                <span class="text-xl">${p.icon}</span>
+                <div>
+                  <h4 class="text-sm font-extrabold text-white">${escapeHtml(p.name)} Security Verification</h4>
+                  <p class="text-[11px] text-zinc-400">Enter the 6-digit security code sent to your device</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onclick="fillDemo2FACode()"
+                class="px-2.5 py-1 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-[11px] font-mono font-semibold text-purple-300 cursor-pointer"
+              >
+                Auto-Fill Demo Code
+              </button>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-zinc-300 mb-1.5">6-Digit One-Time Passcode</label>
+              <input
+                id="auth2FAInput"
+                type="text"
+                maxlength="6"
+                required
+                placeholder="000000"
+                class="w-full px-3.5 py-2.5 bg-zinc-900 border border-zinc-700 focus:border-emerald-500 rounded-xl text-base font-mono tracking-[0.35em] text-center text-white outline-none"
+              />
+            </div>
+
+            <div class="flex items-center justify-between gap-2 pt-1">
+              <button
+                type="button"
+                onclick="authStage = 'login'; renderPaymentAuthPanel();"
+                class="px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-xs font-semibold text-zinc-400 cursor-pointer"
+              >
+                ← Back to Login
+              </button>
+              <button
+                type="submit"
+                class="px-5 py-2.5 rounded-xl font-extrabold text-xs shadow-lg transition cursor-pointer ${p.btnBg}"
+              >
+                Verify & Link ${escapeHtml(p.name)}
+              </button>
+            </div>
+          </form>
+        `;
+        return;
+      }
+
+      // 4. LOGIN / CONNECT FORM STATE (Provider-Specific Fields)
+      let fieldsHtml = '';
+
+      if (p.id === 'zelle') {
+        const bankOpts = p.banks.map(b => `<option value="${b}">${b}</option>`).join('');
+        fieldsHtml = `
+          <div>
+            <label class="block text-xs font-semibold text-zinc-300 mb-1">Select Participating Bank *</label>
+            <select id="authZelleBank" class="w-full px-3 py-2.5 bg-zinc-900 border border-zinc-800 focus:border-purple-500 rounded-xl text-xs sm:text-sm text-white outline-none">
+              ${bankOpts}
+            </select>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-zinc-300 mb-1">Online Banking User ID *</label>
+              <input id="authUserInput" type="text" required placeholder="Enter Bank User ID" class="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 focus:border-purple-500 rounded-xl text-sm text-white outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-zinc-300 mb-1">Online Banking Password *</label>
+              <div class="relative">
+                <input id="authPassInput" type="${showAuthPassword ? 'text' : 'password'}" required placeholder="••••••••" class="w-full px-3 py-2 pr-14 bg-zinc-900 border border-zinc-800 focus:border-purple-500 rounded-xl text-sm text-white outline-none" />
+                <button type="button" onclick="toggleAuthPasswordVisibility()" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] font-mono text-zinc-400 hover:text-white cursor-pointer">${showAuthPassword ? 'Hide' : 'Show'}</button>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (p.id === 'ach') {
+        fieldsHtml = `
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-zinc-300 mb-1">Institution Name *</label>
+              <input id="authAchBank" type="text" required placeholder="e.g. Chase Checking" class="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 focus:border-amber-500 rounded-xl text-sm text-white outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-zinc-300 mb-1">9-Digit Routing # *</label>
+              <input id="authAchRouting" type="text" maxlength="9" required placeholder="021000021" class="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 focus:border-amber-500 rounded-xl text-sm font-mono text-white outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-zinc-300 mb-1">Account Number *</label>
+              <input id="authAchAccount" type="text" maxlength="14" required placeholder="4829104938" class="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 focus:border-amber-500 rounded-xl text-sm font-mono text-white outline-none" />
+            </div>
+          </div>
+        `;
+      } else {
+        const userLabel = p.id === 'paypal'
+          ? 'PayPal Email or Mobile Number *'
+          : p.id === 'venmo'
+            ? 'Venmo @Username, Email, or Phone *'
+            : 'Cash App $Cashtag, Email, or Phone *';
+        const passLabel = p.id === 'cashapp' ? 'Cash App PIN or Password *' : `${p.name} Password *`;
+        const placeholderUser = p.id === 'paypal'
+          ? 'you@example.com'
+          : p.id === 'venmo'
+            ? '@username'
+            : '$Cashtag';
+
+        fieldsHtml = `
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-zinc-300 mb-1">${userLabel}</label>
+              <input id="authUserInput" type="text" required placeholder="${placeholderUser}" class="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 focus:border-emerald-500 rounded-xl text-sm text-white outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-zinc-300 mb-1">${passLabel}</label>
+              <div class="relative">
+                <input id="authPassInput" type="${showAuthPassword ? 'text' : 'password'}" required placeholder="••••••••" class="w-full px-3 py-2 pr-14 bg-zinc-900 border border-zinc-800 focus:border-emerald-500 rounded-xl text-sm text-white outline-none" />
+                <button type="button" onclick="toggleAuthPasswordVisibility()" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] font-mono text-zinc-400 hover:text-white cursor-pointer">${showAuthPassword ? 'Hide' : 'Show'}</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = `
+        <form onsubmit="handleProviderLoginSubmit(event)" class="p-4 sm:p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800 pb-3">
+            <div class="flex items-center gap-2.5">
+              <span class="text-xl">${p.icon}</span>
+              <div>
+                <h4 class="text-sm font-extrabold text-white">Log in to ${escapeHtml(p.name)}</h4>
+                <p class="text-[11px] text-zinc-400">Authorize PokéVault to send instant funds to your account</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onclick="fillDemoProviderCredentials()"
+              class="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-[11px] font-mono font-semibold text-emerald-400 transition cursor-pointer"
+            >
+              ⚡ Quick-Fill Demo Login
+            </button>
+          </div>
+
+          ${fieldsHtml}
+
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+            <span class="text-[11px] text-zinc-500 flex items-center gap-1.5">
+              <span>🔒</span> Encrypted OAuth 2.0 connection • Credentials never stored
+            </span>
+            <button
+              type="submit"
+              class="px-5 py-2.5 rounded-xl font-extrabold text-xs shadow-lg transition cursor-pointer ${p.btnBg}"
+            >
+              ${p.id === 'ach' ? 'Link Bank Account' : `Log In & Connect ${escapeHtml(p.name)}`}
+            </button>
+          </div>
+        </form>
+      `;
+    }
+
+    function toggleAuthPasswordVisibility() {
+      const passInput = document.getElementById('authPassInput');
+      const currentVal = passInput ? passInput.value : '';
+      const userInput = document.getElementById('authUserInput');
+      const currentUser = userInput ? userInput.value : '';
+      showAuthPassword = !showAuthPassword;
+      renderPaymentAuthPanel();
+      if (document.getElementById('authUserInput')) document.getElementById('authUserInput').value = currentUser;
+      if (document.getElementById('authPassInput')) document.getElementById('authPassInput').value = currentVal;
+    }
+
+    function fillDemoProviderCredentials() {
+      const p = PAYMENT_PROVIDERS[selectedProviderId];
+      if (p.id === 'ach') {
+        document.getElementById('authAchBank').value = p.demoBank;
+        document.getElementById('authAchRouting').value = p.demoRouting;
+        document.getElementById('authAchAccount').value = p.demoAccount;
+      } else {
+        document.getElementById('authUserInput').value = p.demoUser;
+        document.getElementById('authPassInput').value = p.demoPass;
+      }
+      showToast(`Demo ${p.name} credentials filled`);
+    }
+
+    function fillDemo2FACode() {
+      const p = PAYMENT_PROVIDERS[selectedProviderId];
+      const input = document.getElementById('auth2FAInput');
+      if (input) input.value = p.demoCode || '482910';
+    }
+
+    function maskDestinationHandle(providerId, rawHandle, extraLabel = '') {
+      const clean = (rawHandle || '').trim();
+      if (providerId === 'ach') {
+        const last4 = clean.slice(-4) || '4938';
+        return `${extraLabel || 'Checking'} (••••${last4})`;
+      }
+      if (providerId === 'zelle') {
+        const maskedUser = clean.length > 3 ? clean.slice(0, 3) + '••••' : clean + '••••';
+        return `${extraLabel} • ${maskedUser}`;
+      }
+      if (clean.includes('@') && !clean.startsWith('@')) {
+        const [local, domain] = clean.split('@');
+        const maskedLocal = local.length > 2 ? local.slice(0, 2) + '••••' : local + '••';
+        return `${maskedLocal}@${domain}`;
+      }
+      return clean.length > 4 ? `${clean.slice(0, 4)}••••` : `${clean}••••`;
+    }
+
+    let pendingAuthPayload = null;
+
+    function handleProviderLoginSubmit(event) {
+      event.preventDefault();
+      const p = PAYMENT_PROVIDERS[selectedProviderId];
+
+      if (p.id === 'ach') {
+        const bank = document.getElementById('authAchBank').value.trim();
+        const acct = document.getElementById('authAchAccount').value.trim();
+        pendingAuthPayload = {
+          providerId: p.id,
+          providerName: p.fullName,
+          speed: p.speed,
+          rawHandle: `${bank} #${acct}`,
+          maskedDestination: maskDestinationHandle('ach', acct, bank)
+        };
+      } else if (p.id === 'zelle') {
+        const bank = document.getElementById('authZelleBank').value;
+        const user = document.getElementById('authUserInput').value.trim();
+        pendingAuthPayload = {
+          providerId: p.id,
+          providerName: p.fullName,
+          speed: p.speed,
+          rawHandle: `${bank} (${user})`,
+          maskedDestination: maskDestinationHandle('zelle', user, bank)
+        };
+      } else {
+        const user = document.getElementById('authUserInput').value.trim();
+        pendingAuthPayload = {
+          providerId: p.id,
+          providerName: p.fullName,
+          speed: p.speed,
+          rawHandle: user,
+          maskedDestination: maskDestinationHandle(p.id, user)
         };
       }
 
-      openPayoutMethodPopup();
+      authStage = 'verifying';
+      renderPaymentAuthPanel();
+
+      setTimeout(() => {
+        if (p.requires2FA) {
+          authStage = '2fa';
+          renderPaymentAuthPanel();
+        } else {
+          finalizeAccountConnection();
+        }
+      }, 650);
+    }
+
+    function handleVerify2FASubmit(event) {
+      event.preventDefault();
+      authStage = 'verifying';
+      renderPaymentAuthPanel();
+      setTimeout(() => {
+        finalizeAccountConnection();
+      }, 500);
+    }
+
+    function finalizeAccountConnection() {
+      if (!pendingAuthPayload) return;
+      connectedPayoutAccount = {
+        ...pendingAuthPayload,
+        verifiedAt: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+      };
+      selectedPayoutMethod = `${connectedPayoutAccount.providerName} → ${connectedPayoutAccount.maskedDestination}`;
+      authStage = 'connected';
+      renderPaymentProviderCards();
+      renderPaymentAuthPanel();
+      renderQuoteModalFooter();
+      showToast(`${connectedPayoutAccount.providerName} linked!`);
+    }
+
+    function disconnectPayoutAccount() {
+      connectedPayoutAccount = null;
+      pendingAuthPayload = null;
+      authStage = 'login';
+      renderPaymentProviderCards();
+      renderPaymentAuthPanel();
+      renderQuoteModalFooter();
+    }
+
+    function populateStep3Confirmation() {
+      const { totalPayout } = getLotFinancialSummary();
+      const destText = connectedPayoutAccount
+        ? `${connectedPayoutAccount.providerName} (${connectedPayoutAccount.maskedDestination})`
+        : selectedPayoutMethod;
+      const speedText = connectedPayoutAccount ? connectedPayoutAccount.speed : 'Instant / Same-Day';
+
+      document.getElementById('step3DisbursedAmount').textContent = formatCurrency(totalPayout);
+      document.getElementById('step3DisbursedSubtitle').textContent = `Queued for dispatch to ${destText}`;
+      document.getElementById('step3TxId').textContent = '#' + currentQuoteId;
+      document.getElementById('step3AccountSummary').textContent = destText;
+      document.getElementById('step3EtaText').textContent = speedText;
+      document.getElementById('step3Timestamp').textContent = new Date().toLocaleString('en-US', {
+        month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+      });
+      document.getElementById('step3SlipRef').textContent = '#' + currentQuoteId;
+      document.getElementById('step3TrackingLabel').textContent = 'SLIP #' + currentQuoteId.replace('PV-', 'SHIP-');
+    }
+
+    function renderQuoteModalFooter() {
+      const footer = document.getElementById('quoteModalFooter');
+      const { totalPayout } = getLotFinancialSummary();
+
+      if (quoteStep === 1) {
+        footer.innerHTML = `
+          <button
+            type="button"
+            onclick="downloadQuoteReceipt()"
+            class="px-3.5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold flex items-center gap-2 transition cursor-pointer"
+          >
+            <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            <span>Download .TXT</span>
+          </button>
+
+          <button
+            type="button"
+            onclick="setQuoteStep(2)"
+            class="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition cursor-pointer"
+          >
+            <span>Accept Buyback Offer & Choose Payout</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </button>
+        `;
+      } else if (quoteStep === 2) {
+        const isReady = connectedPayoutAccount !== null;
+        footer.innerHTML = `
+          <button
+            type="button"
+            onclick="setQuoteStep(1)"
+            class="px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold transition cursor-pointer"
+          >
+            ← Back to Offer
+          </button>
+
+          <button
+            type="button"
+            ${isReady ? '' : 'disabled'}
+            onclick="setQuoteStep(3)"
+            class="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed text-zinc-950 text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition cursor-pointer"
+          >
+            <span>${isReady ? `Confirm & Dispatch ${formatCurrency(totalPayout)} Payout` : 'Log In to a Payment Method Above'}</span>
+          </button>
+        `;
+      } else {
+        footer.innerHTML = `
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onclick="downloadQuoteReceipt()"
+              class="px-3.5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+            >
+              <span>⬇ Download Official Receipt (.TXT)</span>
+            </button>
+            <button
+              type="button"
+              onclick="copyQuoteSummary()"
+              class="px-3.5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold transition cursor-pointer"
+            >
+              Copy Receipt
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onclick="startNewSellLotFromReceipt()"
+            class="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-extrabold transition cursor-pointer"
+          >
+            Start New Sell Lot
+          </button>
+        `;
+      }
+    }
+
+    function startNewSellLotFromReceipt() {
+      clearSellLot();
+      closeQuoteModal();
+      showToast('Ready for a new buyback lot!');
+    }
+
+    function buildPlainTextQuote() {
+      let totalMarket = 0;
+      let totalPayout = 0;
+      let totalCards = 0;
+
+      const destSummary = connectedPayoutAccount
+        ? `${connectedPayoutAccount.providerName} (${connectedPayoutAccount.maskedDestination}) [VERIFIED]`
+        : selectedPayoutMethod;
+
+      const lines = [
+        `==================================================`,
+        `POKÉVAULT ${payoutRate}% | OFFICIAL BUYBACK & PAYOUT RECEIPT`,
+        `Transaction / Quote ID: #${currentQuoteId || 'PV-LIVE'}`,
+        `Payout Destination:     ${destSummary}`,
+        `Status:                 ${quoteStep === 3 ? 'DISBURSEMENT SCHEDULED' : 'QUOTE LOCKED (24H)'}`,
+        `==================================================`,
+        ``
+      ];
+
+      sellLot.forEach((item, idx) => {
+        const card = cardDatabase.find(c => c.id === item.cardId);
+        if (!card) return;
+        const pricing = getAdjustedCardPricing(card, item.condition, item.grade, payoutRate);
+        const lineMarket = pricing.blended * item.qty;
+        const lineOffer = pricing.offer * item.qty;
+        totalCards += item.qty;
+        totalMarket += lineMarket;
+        totalPayout += lineOffer;
+
+        const tag = item.grade === 'RAW' ? CONDITION_MULTIPLIERS[item.condition].short : GRADE_MULTIPLIERS[item.grade].short;
+        lines.push(`${idx + 1}. ${card.name} (${card.set} #${card.number}) [${tag}] x${item.qty}`);
+        lines.push(`   Blended Mkt: ${formatCurrency(lineMarket)}  |  ${payoutRate}% Offer: ${formatCurrency(lineOffer)}`);
+      });
+
+      lines.push(``);
+      lines.push(`--------------------------------------------------`);
+      lines.push(`Total Cards:          ${totalCards}`);
+      lines.push(`Blended Market Total: ${formatCurrency(totalMarket)}`);
+      lines.push(`NET ${payoutRate}% CASH PAYOUT:  ${formatCurrency(totalPayout)}`);
+      lines.push(`==================================================`);
+      return lines.join('\n');
+    }
+
+    function copyQuoteSummary() {
+      const text = buildPlainTextQuote();
+      copyTextFallback(text, 'Buyout quote copied to clipboard!');
+    }
+
+    function downloadQuoteReceipt() {
+      const text = buildPlainTextQuote();
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `PokeVault_${payoutRate}pct_Quote_${currentQuoteId || 'Receipt'}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Receipt downloaded!');
     }
 
     // =========================================================================
-    // 9B. SHAREABLE LINK GENERATOR (URL HASH STATE)
+    // 13. SHARE LINK MODAL
     // =========================================================================
-// ... existing code ... -->
+    function openShareModal() {
+      const baseUrl = window.location.href.split('?')[0];
+      const encodedLot = sellLot.map(i => `${i.cardId}:${i.condition}:${i.grade}:${i.qty}`).join(',');
+      const shareUrl = encodedLot
+        ? `${baseUrl}?rate=${payoutRate}&lot=${encodeURIComponent(encodedLot)}`
+        : `${baseUrl}?rate=${payoutRate}`;
+
+      document.getElementById('shareUrlInput').value = shareUrl;
+      document.getElementById('shareTextSummary').value = sellLot.length > 0
+        ? buildPlainTextQuote()
+        : `PokéVault ${payoutRate}% Live Pokémon Valuation & Trade-In Terminal\nMulti-Source Index: TCGPlayer • eBay Last Sold • Collectr\n${shareUrl}`;
+
+      const modal = document.getElementById('shareModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeShareModal() {
+      const modal = document.getElementById('shareModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function copyShareUrl() {
+      const urlVal = document.getElementById('shareUrlInput').value;
+      copyTextFallback(urlVal, 'Share link copied!');
+    }
+
+    function copyShareSummaryText() {
+      const summaryVal = document.getElementById('shareTextSummary').value;
+      copyTextFallback(summaryVal, 'Lot summary copied!');
+    }
+
+    function parseUrlQueryParams() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const rateParam = parseInt(params.get('rate'), 10);
+        if (!isNaN(rateParam) && rateParam >= 50 && rateParam <= 90) {
+          payoutRate = rateParam;
+        }
+        const lotParam = params.get('lot');
+        if (lotParam) {
+          const parsedItems = [];
+          lotParam.split(',').forEach(token => {
+            const [cardId, cond, grade, qtyStr] = token.split(':');
+            if (cardDatabase.some(c => c.id === cardId)) {
+              parsedItems.push({
+                uid: 'lot_' + Math.random().toString(36).slice(2, 9),
+                cardId,
+                condition: CONDITION_MULTIPLIERS[cond] ? cond : 'NM',
+                grade: GRADE_MULTIPLIERS[grade] ? grade : 'RAW',
+                qty: Math.max(1, parseInt(qtyStr, 10) || 1)
+              });
+            }
+          });
+          if (parsedItems.length > 0) {
+            sellLot = parsedItems;
+            persistSellLot();
+          }
+        }
+      } catch (e) {}
+    }
+
+    // =========================================================================
+    // 14. UTILITIES (CLIPBOARD, TOAST, ESCAPING)
+    // =========================================================================
+    function copyTextFallback(text, successMessage) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        showToast(successMessage);
+      } catch (err) {
+        showToast('Unable to copy automatically');
+      }
+      document.body.removeChild(textarea);
+    }
+
+    function showToast(message) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'px-4 py-2.5 rounded-xl bg-zinc-900 border border-emerald-500/40 text-xs font-bold text-emerald-300 shadow-2xl flex items-center gap-2 animate-fade-slide';
+      toast.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span>${escapeHtml(message)}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.25s ease';
+        setTimeout(() => toast.remove(), 260);
+      }, 2400);
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // =========================================================================
+    // 15. EVENT LISTENERS & BOOTSTRAP
+    // =========================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      loadPersistedState();
+      parseUrlQueryParams();
+
+      // Sync initial UI values
+      setPayoutRate(payoutRate);
+      renderRecentSalesPanel();
+      startRecentSalesRotation();
+      renderSellLot();
+
+      // Payout Sliders & Reset Button
+      document.getElementById('globalPayoutSlider').addEventListener('input', (e) => {
+        setPayoutRate(e.target.value);
+      });
+      document.getElementById('mobilePayoutSlider').addEventListener('input', (e) => {
+        setPayoutRate(e.target.value);
+      });
+      document.getElementById('reset75Btn').addEventListener('click', () => {
+        setPayoutRate(75);
+        showToast('Buyout rate reset to 75%');
+      });
+
+      // Global Condition & Grade Selectors
+      document.getElementById('globalConditionSelect').addEventListener('change', (e) => {
+        globalCondition = e.target.value;
+        if (showCatalogGrid) renderMainCatalogGrid();
+        if (!document.getElementById('similarCardsPopup').classList.contains('hidden')) {
+          renderSimilarPopup(searchQuery);
+        }
+      });
+
+      document.getElementById('globalGradeSelect').addEventListener('change', (e) => {
+        globalGrade = e.target.value;
+        const condSelect = document.getElementById('globalConditionSelect');
+        condSelect.disabled = globalGrade !== 'RAW';
+        condSelect.classList.toggle('opacity-50', globalGrade !== 'RAW');
+        if (showCatalogGrid) renderMainCatalogGrid();
+        if (!document.getElementById('similarCardsPopup').classList.contains('hidden')) {
+          renderSimilarPopup(searchQuery);
+        }
+      });
+
+      // Era Filter Pills
+      document.querySelectorAll('.era-pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+          selectedEra = btn.getAttribute('data-era');
+          updateEraPillStyles();
+          if (selectedEra === 'ALL' && !searchQuery) {
+            showCatalogGrid = false;
+            document.getElementById('activeResultsSection').classList.add('hidden');
+            document.getElementById('searchPromptSection').classList.remove('hidden');
+          } else {
+            showCatalogGrid = true;
+            renderMainCatalogGrid();
+          }
+        });
+      });
+
+      // Sort Selector
+      document.getElementById('sortSelect').addEventListener('change', (e) => {
+        sortMode = e.target.value;
+        if (showCatalogGrid) renderMainCatalogGrid();
+        if (!document.getElementById('similarCardsPopup').classList.contains('hidden')) {
+          renderSimilarPopup(searchQuery);
+        }
+      });
+
+      // Search Input & Keyboard Navigation
+      const searchInput = document.getElementById('searchInput');
+      searchInput.addEventListener('focus', () => {
+        renderSimilarPopup(searchInput.value);
+      });
+
+      searchInput.addEventListener('input', (e) => {
+        searchQuery = e.target.value;
+        const clearBtn = document.getElementById('clearSearchBtn');
+        if (searchQuery.trim().length > 0) {
+          clearBtn.classList.remove('hidden');
+        } else {
+          clearBtn.classList.add('hidden');
+        }
+        renderSimilarPopup(searchQuery);
+      });
+
+      searchInput.addEventListener('keydown', (e) => {
+        const popup = document.getElementById('similarCardsPopup');
+        if (popup.classList.contains('hidden')) return;
+
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          if (popupMatches.length > 0) {
+            popupActiveIndex = (popupActiveIndex + 1) % popupMatches.length;
+            updatePopupHighlight();
+          }
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          if (popupMatches.length > 0) {
+            popupActiveIndex = (popupActiveIndex - 1 + popupMatches.length) % popupMatches.length;
+            updatePopupHighlight();
+          }
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          if (popupActiveIndex >= 0 && popupMatches[popupActiveIndex]) {
+            focusCardFromPopup(popupMatches[popupActiveIndex].id);
+          } else {
+            applyPopupToMainGrid();
+          }
+        } else if (e.key === 'Escape') {
+          closeSimilarPopup();
+        }
+      });
+
+      // Click outside search wrapper closes autocomplete popup
+      document.addEventListener('click', (e) => {
+        const wrapper = document.getElementById('searchAutocompleteWrapper');
+        if (wrapper && !wrapper.contains(e.target)) {
+          closeSimilarPopup();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
